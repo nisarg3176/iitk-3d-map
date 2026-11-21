@@ -4,6 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>IIT Kanpur in 3D</title>
+<meta name="description" content="An interactive 3D map of the IIT Kanpur campus. Find any building, hostel block, lecture hall or professor's office, and get walking or cycling directions.">
+<meta name="theme-color" content="#0f6b5c">
+<meta property="og:type" content="website">
+<meta property="og:title" content="IIT Kanpur in 3D">
+<meta property="og:description" content="An interactive 3D map of the IIT Kanpur campus. Find any building, hostel block, lecture hall or professor's office, and get walking or cycling directions.">
+<meta property="og:url" content="https://nisarg3176.github.io/iitk-3d-map/">
+<meta property="og:image" content="https://nisarg3176.github.io/iitk-3d-map/preview.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nisarg3176.github.io/iitk-3d-map/preview.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
@@ -40,7 +51,9 @@
     font:600 10.5px/1 Outfit,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:#4c5a52;
     text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 6px rgba(255,255,255,.9)}
   body.night .lbl.lane{color:#c9d2e6;text-shadow:0 0 3px #0b1222,0 0 6px #0b1222}
-  .lbl.lane::after,.lbl.hn::after,.lbl.poi::after{display:none}
+  .lbl.lane::after,.lbl.hn::after,.lbl.poi::after,.lbl.blk::after{display:none}
+  .lbl.blk{font:600 10.5px/1 Outfit,sans-serif;padding:4px 7px;border-radius:6px}
+  .lbl.blk i{width:6px;height:6px;margin-right:5px}
   .lbl.hn{font:600 10px/1 Outfit,sans-serif;padding:3px 6px;border-radius:5px;background:rgba(255,255,255,.92);color:#3b4a42}
   body.night .lbl.hn{background:rgba(16,22,38,.85);color:#e8dcc0}
   .lbl.poi{width:22px;height:22px;padding:0;display:flex;align-items:center;justify-content:center;color:#fff;border:2px solid #fff;font:700 9px/1 Outfit,sans-serif}
@@ -61,10 +74,15 @@
   #title h1 span{color:var(--gold)}
   #title p{margin:5px 0 0;font-size:12px;color:var(--ink2)}
 
-  #lockBtn{z-index:4;right:calc(18px + env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom))}
+  #viewCtl{position:fixed;z-index:4;right:calc(18px + env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:center}
+  #viewCtl .pill{position:static}
+  #viewBtn b{font:700 13px Outfit,sans-serif;letter-spacing:.02em}
+  #viewBtn button{gap:5px}
+  body.flat #lockBtn{display:none}
+  body.walking #viewCtl{display:none}
   #lockBtn button{gap:7px}
   #lockBtn .lk-on{display:none} #lockBtn button.on .lk-on{display:block} #lockBtn button.on .lk-off{display:none}
-  @media (max-width:720px){ #lockBtn{bottom:auto;top:calc(188px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right))} #lockBtn span{display:none} #lockBtn button{padding:9px} }
+  @media (max-width:720px){ #viewCtl{bottom:auto;top:calc(188px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));flex-direction:column} #lockBtn span,#viewBtn span{display:none} #lockBtn button,#viewBtn button{padding:9px} #viewBtn button{min-width:38px;justify-content:center} }
   body.walking #lockBtn{display:none}
   #dock{left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:center}
   .pill{display:flex;padding:4px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-b);
@@ -332,10 +350,11 @@
   <label class="tog"><input type="checkbox" id="lifeT" checked><span></span>Traffic, people &amp; birds</label>
 </div>
 
-<div id="lockBtn" class="ui pill round"><button id="bLock" aria-label="Lock viewing angle" aria-pressed="false" title="Lock viewing angle (zoom and move only)">
+<div id="viewCtl"><div id="viewBtn" class="pill round"><button id="b2D" aria-label="Switch to 2D map" aria-pressed="false" title="Switch between 3D and a flat 2D map"><b id="b2DTxt">2D</b><span id="viewTxt">map</span></button></div>
+<div id="lockBtn" class="pill round"><button id="bLock" aria-label="Lock viewing angle" aria-pressed="false" title="Lock viewing angle (zoom and move only)">
   <svg class="lk-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>
   <svg class="lk-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-  <span id="lockTxt">Lock angle</span></button></div>
+  <span id="lockTxt">Lock angle</span></button></div></div>
 <div id="dock" class="ui">
   <div class="pill">
     <button id="bSky" aria-label="Time, weather and season" title="Time, weather & season">
@@ -881,16 +900,30 @@ for(const b of data.buildings){
   ac.fillStyle='#fff'; ac.beginPath(); for(const r of rings){ r.forEach((p,i)=>i?ac.lineTo(toAo(p[0]),toAo(p[1])):ac.moveTo(toAo(p[0]),toAo(p[1]))); ac.closePath(); } ac.fill('evenodd');
   const [cx,cz]=centroid(outer);
   const bi={cx,cz,H,area,outer,w0,w1:wallG.p.length/3,r0,r1:roofG.p.length/3,cat:null,name:b.n?cleanName(b.n):null}; bInfo.push(bi);
-  if(b.n && !SKIP.test(b.n)){
+  const svc=b.n&&/^(central store|security control room|electrical maintenance office|central ac plant|atmospheric monitoring station)/i.test(b.n);
+  if(svc) labels.push({name:cleanName(b.n),short:cleanName(b.n).replace(/\s*\(.*\)$/,''),x:cx,z:cz,y:H+2,rank:Math.sqrt(area),tier:3.5,kind:'blk',cat:'civic',size:Math.sqrt(area)});
+  else if(b.n && (!SKIP.test(b.n) || (/^Hall ?\d/i.test(b.n)&&!/gym/i.test(b.n)))){
     let name=cleanName(b.n); if(b.ab && !name.includes(b.ab)) name+=' ('+b.ab+')';
+    if(/^Hall\d/i.test(name)) name=name.replace(/^Hall(\d)/i,'Hall $1');
     const hm=name.match(/^Hall (\d+)\b/i);
-    if(hm){ const k='Hall '+hm[1]; const g=hallGroups.get(k)||{x:0,z:0,n:0,H:0,area:0}; g.x+=cx;g.z+=cz;g.n++;g.H=Math.max(g.H,H);g.area+=area; hallGroups.set(k,g); }
+    if(hm){ const k='Hall '+hm[1]; const g=hallGroups.get(k)||{x:0,z:0,n:0,H:0,area:0}; g.x+=cx;g.z+=cz;g.n++;g.H=Math.max(g.H,H);g.area+=area; hallGroups.set(k,g);
+      const sub=name.replace(/^Hall \d+\s*/i,'').trim();
+      if(sub) labels.push({name:k+' '+sub,short:'H'+hm[1]+' · '+sub.replace(/^./,c=>c.toUpperCase()),hall:k,x:cx,z:cz,y:H+2,rank:Math.sqrt(area),tier:3.5,kind:'blk',
+        cat:/mess|canteen/i.test(sub)?'food':'hostel',alt:[k+' '+sub.replace(/^block\s*/i,''),sub+' '+k],size:Math.sqrt(area)}); }
     else labels.push({name,x:cx,z:cz,y:H+(didHip?4:2),rank:Math.sqrt(area)*(1+floors*0.1),cat:bcat(name,t),alt:[b.fn,...(b.alt||[])].filter(Boolean),size:Math.sqrt(area),...(b.feat?{kind:'feat',cat:'health'}:{})});
   } else if(b.hn) labels.push({name:b.hn,x:cx,z:cz,y:H+(didHip?3.5:1.2),rank:0,tier:4,kind:'hn'});
 }
 if(_rSave!==null) R.set(_rSave);
 // places from the map data (points + named areas)
 const placeNames=new Set(data.places.map(p=>p.n));
+{ const IF=data.info||[], ex=new Set(labels.map(l=>l.name.toLowerCase()));
+  // L8 and L9 sit on the ground floor below L12 and L13
+  for(const r of IF) if(/^Lecture Hall (8|9)$/.test(r.n)&&!ex.has(r.sh.toLowerCase())) labels.push({name:r.sh,x:r.x-7,z:r.z+4,y:8,rank:20,tier:3,cat:'academic',alt:[r.n],sub:'Ground floor',size:20});
+  // Tutorial Block rooms: found by search, shown when picked
+  for(const r of IF) if(/^[12]\d\d$/.test(r.n)&&r.x<-210&&r.x>-260&&r.z>245&&r.z<295) labels.push({name:'TB '+r.n,short:'TB '+r.n,x:r.x,z:r.z,y:+r.lv?9:5,rank:0,tier:4.5,kind:'blk',cat:'academic',alt:['TB'+r.n,'Tutorial Block '+r.n,'Room '+r.n,r.n],sub:(+r.lv?'First floor':'Ground floor')+', Tutorial Block',size:10});
+  // tennis courts and Kargil Circle
+  for(const r of IF) if(/^C[1-6]$/.test(r.n)&&r.k==='pitch') labels.push({name:'Tennis Court '+r.n,short:'Court '+r.n,x:r.x,z:r.z,y:2,rank:0,tier:3.5,kind:'blk',cat:'sports',alt:[r.n+' tennis court','Tennis '+r.n,r.n],size:20});
+  const kg=IF.find(r=>r.n==='Kargil circle'); if(kg&&!ex.has('kargil circle')) labels.push({name:'Kargil Circle',x:kg.x,z:kg.z,y:3,rank:15,tier:3,cat:'civic',alt:['Kargil Chowk','Kargil Heights','Kargil circle'],size:20}); }
 for(const [k,g] of hallGroups) if(!placeNames.has(k)) labels.push({name:k,x:g.x/g.n,z:g.z/g.n,y:g.H+3,rank:Math.sqrt(g.area)*1.2,cat:'hostel'});
 const have=new Set(labels.map(l=>l.name.toLowerCase()));
 for(const p of data.places){
@@ -1316,13 +1349,14 @@ const HEART='<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.3-9.6C1.5 7.9 3
 for(const l of labels){ const el=document.createElement('div');
   if(l.kind==='lane'){ el.className='lbl lane'; el.textContent=l.name; l.dy=12; }
   else if(l.kind==='hn'){ el.className='lbl hn'; el.textContent=l.name; l.dy=20; }
+  else if(l.kind==='blk'){ el.className='lbl blk'; const i=document.createElement('i'); i.style.background=CATCOL[l.cat]||CATCOL.hostel; el.appendChild(i); el.appendChild(document.createTextNode(l.short)); l.dy=22; }
   else if(l.kind==='poi'){ const ic=ICONS[l.name]; el.className='lbl poi'; el.innerHTML=ic[0]; el.style.background=ic[1]; l.dy=16; }
   else if(l.kind==='feat'){ el.className='lbl feat'; el.innerHTML='<b>'+HEART+'</b>'; el.appendChild(document.createTextNode(l.name)); l.dy=34; }
   else { el.className='lbl t'+l.tier; const i=document.createElement('i'); i.style.background=CATCOL[l.cat]||CATCOL.civic; el.appendChild(i); el.appendChild(document.createTextNode(l.name)); l.dy=34; }
   lblRoot.appendChild(el); l.el=el; l.v=new THREE.Vector3(l.x,l.y,l.z); l.w=0; }
 const tmpV=new THREE.Vector3();
 let labelsOn=true;
-let catFilter=null, focusLbl=null, spotsOn=0, lblCamD=1000, angleLock=false;
+let catFilter=null, focusLbl=null, spotsOn=0, lblCamD=1000, angleLock=false, flat2D=false;
 function placeLabel(l,W,H,placed){
   tmpV.copy(l.v).project(camera);
   if(!(tmpV.z<1 && Math.abs(tmpV.x)<1.05 && Math.abs(tmpV.y)<1.05)) return false;
@@ -1337,16 +1371,25 @@ function updateLabels(){
   if(!labelsOn) return;
   const W=innerWidth,H=innerHeight, placed=[];
   let shown=0; const cd=lblCamD=camera.position.distanceTo(controls.target), MAX=isCoarse?(cd>900?9:14):(cd>900?18:28), PAD=isCoarse?10:6;
-  if(spotsOn){ if(focusLbl){ const ok=placeLabel(focusLbl,W,H,placed); setVis(focusLbl,ok); } for(const l of labels) if(l!==focusLbl) setVis(l,false); return; }
+  if(spotsOn){ placeLabel.pad=PAD;
+    const act=pins.filter(p=>p.on), R=Math.max(110,Math.min(260,cd*0.16));
+    for(const p of act) if(p.vis){ _pp.set(p.u.x,2,p.u.z).project(camera); const x=(_pp.x*.5+.5)*W, y=(-_pp.y*.5+.5)*H; placed.push([x-15,y-15,x+15,y+15]); }
+    if(focusLbl){ const ok=placeLabel(focusLbl,W,H,placed); setVis(focusLbl,ok); if(ok) shown++; }
+    for(const l of labels){ if(l===focusLbl) continue; let vis=false;
+      if(!(l.kind==='lane'||l.kind==='hn'||l.kind==='poi'||l.tier>=4.5||act.some(p=>p.u.lbl===l)) && shown<MAX){
+        let near=1e9; for(const p of act){ const d=Math.hypot(p.u.x-l.x,p.u.z-l.z); if(d<near) near=d; }
+        if(near<R && (l.kind!=='blk'||cd<520) && placeLabel(l,W,H,placed)){ vis=true; shown++; } }
+      setVis(l,vis); }
+    return; }
   placeLabel.pad=PAD;
   if(focusLbl){ const ok=placeLabel(focusLbl,W,H,placed); setVis(focusLbl,ok); if(ok) shown++; }
   for(const l of labels){
     if(l===focusLbl) continue;
     let vis=false;
     const d=camera.position.distanceTo(l.v);
-    let reach = l.tier===0 ? cd*2.2+700 : l.tier===1 ? Math.min(2600,cd*1.35+250) : l.tier===2 ? 700 + l.rank*3 : l.tier===2.5 ? 900 : l.tier===3 ? 420 : 210;
+    let reach = l.tier===0 ? cd*2.2+700 : l.tier===1 ? Math.min(2600,cd*1.35+250) : l.tier===2 ? 700 + l.rank*3 : l.tier===2.5 ? 900 : l.tier===3 ? 420 : l.tier===3.5 ? (cd<520?480:-1) : l.tier===4.5 ? -1 : 210;
     if(catFilter && l.tier!==0) reach = (l.cat===catFilter && (!l.kind||l.kind==='feat')) ? 1e9 : -1;
-    if(wk.on) reach=Math.min(reach, l.tier<=1?1100 : l.tier===2.5?140 : l.tier>=3?70 : 420);
+    if(wk.on) reach=Math.min(reach, l.tier<=1?1100 : l.tier===2.5?140 : l.tier===3.5?120 : l.tier>=3?70 : 420);
     if(d<reach && shown<MAX && placeLabel(l,W,H,placed)){ vis=true; shown++; }
     setVis(l,vis);
   }
@@ -1621,7 +1664,7 @@ const EYE=1.7+0.2;
 const hintEl=document.getElementById('hint'); const isTouch=matchMedia('(pointer:coarse)').matches; if(isTouch) document.body.classList.add('touch');
 function showHint(txt,ms=6500){ hintEl.textContent=txt; hintEl.classList.remove('gone'); clearTimeout(hintTimer); hintTimer=setTimeout(hideHint,ms); }
 function enterWalk(at){
-  if(wk.on) return; closePanel(); fly=null; controls.autoRotate=false;
+  if(wk.on) return; if(flat2D) set2D(false,true); closePanel(); fly=null; controls.autoRotate=false;
   const t=at||controls.target; const [x,z]=findSpot(t.x,t.z);
   const f=new THREE.Vector3().subVectors(controls.target,camera.position); f.y=0; if(f.lengthSq()<1) f.set(0,0,-1); f.normalize();
   const nr=nearestRoad(x,z,14); if(nr){ let dx=Math.cos(nr.ang), dz=Math.sin(nr.ang); if(dx*f.x+dz*f.z<0){dx=-dx;dz=-dz;} f.set(dx,0,dz); }
@@ -1682,7 +1725,7 @@ document.getElementById('bWalk').onclick=()=>wk.on?exitWalk():enterWalk();
 const nrm=s=>(s||'').toLowerCase().replace(/\b(iit ?k(anpur)?|dept\.?( of)?|department( of)?|the|of|and)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
 const SYN={hospital:'health',doctor:'health',medical:'health',hostel:'hall',mess:'hall',library:'kelkar',lib:'kelkar',cc:'computer centre',temple:'temple',canteen:'canteen',food:'canteen',coffee:'cafe',gym:'sports',pool:'swimming',lhc:'lecture hall',counselling:'cmhw',counseling:'cmhw',counsel:'cmhw',bank:'bank',atm:'atm',airstrip:'airstrip',oat:'open air theatre'};
 const searchItems=[]; { const seen=new Set();
-  for(const l of labels){ if(l.kind&&l.kind!=='feat'&&l.kind!=='lane') continue; const k=l.name.toLowerCase(); if(seen.has(k)) continue; seen.add(k);
+  for(const l of labels){ if(l.kind&&l.kind!=='feat'&&l.kind!=='lane'&&l.kind!=='blk') continue; const k=l.name.toLowerCase(); if(seen.has(k)) continue; seen.add(k);
     const keys=[l.name,...(l.alt||[])].map(nrm).filter(Boolean);
     const acr=nrm(l.name).split(' ').filter(w=>w.length>1||/\d/.test(w)).map(w=>/^\d+$/.test(w)?w:w[0]).join('');
     searchItems.push({l,keys,acr,type:l.name==='CMHW'?'Mental health & wellbeing':l.kind==='lane'?'Road':({academic:'Academic',hostel:'Hostel',food:'Food',shop:'Shop',sports:'Sports',worship:'Worship',health:'Health',civic:'Place'})[l.cat]||'Place'}); } }
@@ -1691,7 +1734,7 @@ function searchScore(it,q,qc){ let best=0;
     if(k===q) best=Math.max(best,100); else if(k.startsWith(q)) best=Math.max(best,85); else if((' '+k).includes(' '+q)) best=Math.max(best,70);
     else if(kc.includes(qc)) best=Math.max(best,qc.length>2?50:0); }
   if(qc.length>=2 && it.acr===qc) best=Math.max(best,78); else if(qc.length>=2&&it.acr.startsWith(qc)) best=Math.max(best,45);
-  if(best) best+=Math.min(8,(it.l.rank||0)/25)-(it.l.kind==='lane'?6:it.l.kind==='person'?3:0)+(it.l.tier<=1?6:0); return best; }
+  if(best) best+=Math.min(8,(it.l.rank||0)/25)-(it.l.kind==='lane'?6:it.l.kind==='person'?12:0)+(it.l.tier<=1?6:0); return best; }
 const sq=document.getElementById('sq'), resEl=document.getElementById('results'), sclear=document.getElementById('sclear');
 let resList=[], resSel=0;
 const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]);
@@ -1782,7 +1825,7 @@ document.getElementById('season').addEventListener('click',e=>{ const b=e.target
 document.getElementById('lifeT').onchange=e=>{ LIFE.on=e.target.checked; kick(); };
 document.getElementById('bLabels').onclick=e=>{ labelsOn=!labelsOn; document.body.classList.toggle('hide-labels',!labelsOn); e.currentTarget.classList.toggle('on',labelsOn); kick(); };
 let fly=null;
-function flyTo(t,off,dur=1800,free){ if(angleLock&&!free) off=camera.position.clone().sub(controls.target).normalize().multiplyScalar(off.length()); fly={t0:performance.now(),dur,fromP:camera.position.clone(),fromT:controls.target.clone(),toT:t.clone(),toP:t.clone().add(off)}; kick(); }
+function flyTo(t,off,dur=1800,free){ if(flat2D) off=new THREE.Vector3(0,off.length(),0.01); else if(angleLock&&!free) off=camera.position.clone().sub(controls.target).normalize().multiplyScalar(off.length()); fly={t0:performance.now(),dur,fromP:camera.position.clone(),fromT:controls.target.clone(),toT:t.clone(),toP:t.clone().add(off)}; kick(); }
 document.getElementById('bReset').onclick=()=>{ if(wk.on) exitWalk(true); setCat('all',false); flyTo(HOME_T,HOME_OFF,1800,true); };
 // ---- lock viewing angle: one finger moves, pinch zooms, no rotate or tilt
 const bLock=document.getElementById('bLock');
@@ -1792,6 +1835,20 @@ function setAngleLock(on){ angleLock=on; bLock.classList.toggle('on',on); bLock.
   if(on) controls.autoRotate=false;
   showHint(on?'Angle locked · double-tap to zoom in':'Angle unlocked',3000); kick(); }
 bLock.onclick=()=>setAngleLock(!angleLock);
+// ---- 2D map: straight down, north up, no rotation
+const b2D=document.getElementById('b2D');
+function set2D(on,quiet){ if(on===flat2D) return; flat2D=on; document.body.classList.toggle('flat',on);
+  b2D.classList.toggle('on',on); b2D.setAttribute('aria-pressed',on); b2D.setAttribute('aria-label',on?'Switch to 3D view':'Switch to 2D map');
+  document.getElementById('b2DTxt').textContent=on?'3D':'2D'; document.getElementById('viewTxt').textContent=on?'view':'map';
+  const d=camera.position.distanceTo(controls.target);
+  if(on){ controls.minPolarAngle=0; controls.maxPolarAngle=0.0001; controls.enableRotate=false; controls.touches.TWO=THREE.TOUCH.DOLLY_PAN; controls.autoRotate=false;
+    fly=null; camera.position.copy(controls.target).add(new THREE.Vector3(0,d,0.01)); camera.up.set(0,1,0); controls.update(); }
+  else { controls.maxPolarAngle=1.36; controls.minPolarAngle=0.15; controls.enableRotate=!angleLock; controls.touches.TWO=angleLock?THREE.TOUCH.DOLLY_PAN:THREE.TOUCH.DOLLY_ROTATE;
+    flyTo(controls.target.clone(),HOME_OFF.clone().normalize().multiplyScalar(d),900,true); }
+  try{ localStorage.setItem('iitk3d.view',on?'2d':'3d'); }catch(e){}
+  if(!quiet) showHint(on?'2D map · drag to move, pinch to zoom':'Back to 3D',2500); kick(); }
+b2D.onclick=()=>set2D(!flat2D);
+try{ if(localStorage.getItem('iitk3d.view')==='2d') set2D(true,true); }catch(e){}
 
 /* ---------------- loop ---------------- */
 /* ================= DIRECTIONS (from / to) ================= */
@@ -2055,9 +2112,9 @@ function openState(spec){ const wk=parseOH(spec); if(!wk) return null; if(wk==='
   return {open:false,txt:'Closed'}; }
 // ---- which building a point is in
 function buildingAt(x,z){ for(const b of bInfo){ if(Math.abs(b.cx-x)>160||Math.abs(b.cz-z)>160) continue; if(pip(x,z,b.outer)) return b; } return null; }
-const cardLabels=labels.filter(l=>!l.kind||l.kind==='feat');
+const cardLabels=labels.filter(l=>!l.kind||l.kind==='feat'||l.kind==='blk');
 function insideOf(pl){ const b=buildingAt(pl.x,pl.z); if(!b) return []; const seen=new Set([nrm(pl.name)]), out=[];
-  for(const l of cardLabels){ if(Math.abs(l.x-b.cx)>160||Math.abs(l.z-b.cz)>160) continue; const k=nrm(l.name); if(seen.has(k)||!pip(l.x,l.z,b.outer)) continue; seen.add(k); out.push(l); }
+  for(const l of cardLabels){ if(l.tier>=4.5||Math.abs(l.x-b.cx)>160||Math.abs(l.z-b.cz)>160) continue; const k=nrm(l.name); if(seen.has(k)||!pip(l.x,l.z,b.outer)) continue; seen.add(k); out.push(l); }
   return out.slice(0,12); }
 // ---- the card
 const cardEl=document.getElementById('card'); let cardPl=null;
@@ -2071,14 +2128,14 @@ function showPlaceCard(pl){
   cardPl=pl; const inf=infoFor(pl)||{}; const st=openState(inf.h);
   const util=pl.util?UT[pl.util]:null;
   const kind=[util?`<i style="background:${util[3]}"></i>${util[1]}`:`<i style="background:${pl.kind==='feat'?'#e0262f':CATCOL[pl.cat]||CATCOL.civic}"></i>${CATN[pl.cat]||'Place'}`,
-    pl.name==='CMHW'?'Center for Mental Health and Wellbeing':'',
+    pl.name==='CMHW'?'Center for Mental Health and Wellbeing':pl.sub||'',
     inf.k&&!/^(yes|university)$/.test(inf.k)?titleCase(inf.k):''].filter(Boolean).join(' · ');
   const wc={yes:'Step-free',limited:'Partly step-free',no:'Not step-free'}[inf.wc];
   const inside=insideOf(pl);
   const body=acts(pl,`<button data-act="walk">${IC.walk}Walk here</button>`)+
     kvRows([['Hours',inf.h?(st?`<span class="${st.open?'c-open':'c-closed'}">${st.txt}</span><br>`:'')+esc(inf.h):''],
       ['Phone',inf.ph?`<a href="tel:${esc(inf.ph.replace(/\s/g,''))}">${esc(inf.ph)}</a>`:''],['Website',inf.web?link(inf.web):''],
-      ['Access',wc||''],['Floor',inf.lv!=null&&inf.lv!==''?esc(String(inf.lv)):''],['Cuisine',inf.cu?esc(titleCase(inf.cu.replace(/;/g,', '))):''],
+      ['Access',wc||''],['Floor',!pl.sub&&inf.lv!=null&&inf.lv!==''?esc(String(inf.lv)):''],['Cuisine',inf.cu?esc(titleCase(inf.cu.replace(/;/g,', '))):''],
       ['Run by',inf.op?esc(inf.op):''],['Note',inf.ds?esc(inf.ds):'']])+
     (pl.people?`<div class="c-sec">Faculty offices here</div><div class="c-list">${pl.people.slice(0,40).map((p,i)=>`<div data-person="${i}">${esc(p.n)}<small>${esc(p.d.slice(0,24))}</small></div>`).join('')}</div>`:'')+
     (inside.length?`<div class="c-sec">Also in this building</div><div class="c-list">${inside.map((l,i)=>`<div data-inside="${i}"><i style="width:7px;height:7px;border-radius:50%;background:${CATCOL[l.cat]||CATCOL.civic}"></i>${esc(l.name)}</div>`).join('')}</div>`:'')+
@@ -2309,7 +2366,7 @@ function frame(now){
     controls.target.lerpVectors(fly.fromT,fly.toT,e); camera.position.lerpVectors(fly.fromP,fly.toP,e); dirty=true; if(k>=1) fly=null; }
   if(wk.on){ stepWalk(dt,now); dirty=true; }
   else {
-    if(!angleLock && !controls.autoRotate && !fly && !focusLbl && !catFilter && !routeMesh.visible && now-idleT>30000){ controls.autoRotate=true; controls.autoRotateSpeed=0.25; }
+    if(!angleLock && !flat2D && !controls.autoRotate && !fly && !focusLbl && !catFilter && !routeMesh.visible && now-idleT>30000){ controls.autoRotate=true; controls.autoRotateSpeed=0.25; }
     controls.update(); if(controls.autoRotate) dirty=true;
     clampTarget();
   }

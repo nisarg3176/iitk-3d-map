@@ -45,11 +45,9 @@
   body.night .lbl.hn{background:rgba(16,22,38,.85);color:#e8dcc0}
   .lbl.poi{width:22px;height:22px;padding:0;display:flex;align-items:center;justify-content:center;color:#fff;border:2px solid #fff;font:700 9px/1 Outfit,sans-serif}
   .lbl.poi svg{width:13px;height:13px}
-  .lbl.feat{font-weight:700;font-size:14px;padding:8px 14px 8px 8px;background:linear-gradient(135deg,#e0559b,#b2467f);color:#fff;border:0;
-    box-shadow:0 4px 18px rgba(224,85,155,.45)}
-  .lbl.feat::after{background:#c74d8b}
-  .lbl.feat b{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.25);margin-right:7px;vertical-align:-5px;animation:pulse 1.8s ease-in-out infinite}
-  .lbl.feat b svg{width:12px;height:12px}
+  .lbl.feat{font-weight:700}
+  .lbl.feat b{display:inline-flex;align-items:center;margin-right:5px;vertical-align:-2px;color:#e0262f}
+  .lbl.feat b svg{width:13px;height:13px}
   @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.55)}50%{box-shadow:0 0 0 6px rgba(255,255,255,0)}}
   #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 75% 70% at 50% 46%,transparent 55%,rgba(28,40,24,.26) 100%);transition:background .8s}
   body.night #vig{background:radial-gradient(ellipse 75% 70% at 50% 46%,transparent 45%,rgba(2,4,12,.55) 100%)}
@@ -986,17 +984,6 @@ for(const d of DP){
   const dm=new THREE.Mesh(doorG.build(),doorMat); dm.receiveShadow=true; scene.add(dm);
   nightHooks.push((n,k)=>{ doorMat.emissive.setRGB(1.0*k,0.72*k,0.38*k); });
   addOverlay(flatD,null,12.2); }
-// ---- Counselling Service beacon
-for(const b of data.buildings){ if(!b.feat) continue; const o=toPts(b.r[0]); const [x,z]=centroid(o);
-  const info=bInfo.find(q=>Math.abs(q.cx-x)<0.5&&Math.abs(q.cz-z)<0.5); const H=info?info.H:8;
-  const rm=new THREE.MeshBasicMaterial({color:0xe0559b,transparent:true,opacity:0.7,depthWrite:false,side:THREE.DoubleSide});
-  const ring=new THREE.Mesh(new THREE.RingGeometry(15,17.5,64),rm); ring.rotation.x=-Math.PI/2; ring.position.set(x,0.5,z); ring.renderOrder=13; scene.add(ring);
-  const disk=new THREE.Mesh(new THREE.CircleGeometry(15,64),new THREE.MeshBasicMaterial({color:0xe0559b,transparent:true,opacity:0.14,depthWrite:false})); disk.rotation.x=-Math.PI/2; disk.position.set(x,0.45,z); disk.renderOrder=13; scene.add(disk);
-  const bm=new THREE.MeshBasicMaterial({color:0xe0559b,transparent:true,opacity:0.3,depthWrite:false,side:THREE.DoubleSide,fog:false});
-  const beam=new THREE.Mesh(new THREE.CylinderGeometry(2.4,2.4,70,24,1,true),bm); beam.position.set(x,H+35,z); beam.renderOrder=14; scene.add(beam);
-  nightHooks.push((n)=>{ bm.opacity=0.3+0.25*n; bm.color.set(n>0.5?0xff6fb4:0xe0559b); rm.opacity=0.7+0.25*n; });
-}
-
 for(const l of (data.lanes||[])) labels.push({name:l.n,x:l.x,z:l.z,y:1.2,rank:0,tier:2.5,kind:'lane'});
 for(const p of poiIcons) labels.push({name:p.t,x:p.x,z:p.z,y:2.2,rank:0,tier:4,kind:'poi'});
 for(const d of DP) if(d.t==='hn') labels.push({name:d.n,x:d.x,z:d.z,y:3,rank:0,tier:4,kind:'hn'});
@@ -1179,7 +1166,7 @@ for(const l of labels){ const el=document.createElement('div');
   if(l.kind==='lane'){ el.className='lbl lane'; el.textContent=l.name; l.dy=12; }
   else if(l.kind==='hn'){ el.className='lbl hn'; el.textContent=l.name; l.dy=20; }
   else if(l.kind==='poi'){ const ic=ICONS[l.name]; el.className='lbl poi'; el.innerHTML=ic[0]; el.style.background=ic[1]; l.dy=16; }
-  else if(l.kind==='feat'){ el.className='lbl feat'; el.innerHTML='<b>'+HEART+'</b>'; el.appendChild(document.createTextNode(l.name)); l.dy=40; }
+  else if(l.kind==='feat'){ el.className='lbl feat'; el.innerHTML='<b>'+HEART+'</b>'; el.appendChild(document.createTextNode(l.name)); l.dy=34; }
   else { el.className='lbl t'+l.tier; const i=document.createElement('i'); i.style.background=CATCOL[l.cat]||CATCOL.civic; el.appendChild(i); el.appendChild(document.createTextNode(l.name)); l.dy=34; }
   lblRoot.appendChild(el); l.el=el; l.v=new THREE.Vector3(l.x,l.y,l.z); l.w=0; }
 const tmpV=new THREE.Vector3();
@@ -1563,7 +1550,7 @@ function renderResults(){
   resList=searchItems.map(it=>[searchScore(it,q,qc),it]).filter(x=>x[0]>0).sort((a,b)=>b[0]-a[0]).slice(0,8).map(x=>x[1]); resSel=0;
   if(!resList.length){ resEl.innerHTML='<div class="nores">No places match “'+esc(raw)+'”</div>'; resEl.classList.add('open'); return; }
   const re=new RegExp('('+raw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','i');
-  resEl.innerHTML=resList.map((it,i)=>`<div class="res${i===0?' sel':''}" data-i="${i}"><i style="background:${it.l.kind==='lane'?'#8b8f96':it.l.kind==='feat'?'#e0559b':CATCOL[it.l.cat]||CATCOL.civic}"></i><span>${esc(it.l.name).replace(re,'<b>$1</b>')}</span><small>${it.type}</small></div>`).join('');
+  resEl.innerHTML=resList.map((it,i)=>`<div class="res${i===0?' sel':''}" data-i="${i}"><i style="background:${it.l.kind==='lane'?'#8b8f96':it.l.kind==='feat'?'#e0262f':CATCOL[it.l.cat]||CATCOL.civic}"></i><span>${esc(it.l.name).replace(re,'<b>$1</b>')}</span><small>${it.type}</small></div>`).join('');
   resEl.classList.add('open');
 }
 function closeResults(){ resEl.classList.remove('open'); }

@@ -244,8 +244,8 @@ const lmsg = document.getElementById('lmsg');
 const tick = () => new Promise(r => setTimeout(r, 0));
 
 /* ---------------- helpers ---------------- */
-function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed);
-  t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function rng(seed){ const f=function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed);
+  t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; f.st=()=>seed; f.set=v=>{seed=v;}; return f; }
 const R = rng(20261121);
 const rr = (a,b)=>a+(b-a)*R();
 function hash2(x,y){ let h = Math.imul(x|0,374761393) + Math.imul(y|0,668265263); h=(h^(h>>>13))*1274126177|0; return ((h^(h>>>16))>>>0)/4294967296; }
@@ -448,6 +448,13 @@ function glowTexture(inner='rgba(255,214,150,1)'){
 
 /* ---------------- build world ---------------- */
 const data=await (await fetch('campus.json')).json();
+// Hall 13: mirror image of Hall 12 (canteen block left out), across the road between them
+{ const SRC={'Hall 12 Mess':1,'Hall 12 Block E':0,'Hall 12 Block C':1,'Hall 12 Block F':0,'Hall 12 Block D':0,'Hall 12 Block B':0,'Hall 12 Block A':0,'Hall12 Canteen':0}, AX=-773, DZ=60;
+  const canteenPart=b=>{ if(b.n) return false; const q=b.r[0]; let x=0,z=0; for(let i=0;i<q.length;i+=2){x+=q[i];z+=q[i+1];} x/=q.length/2; z/=q.length/2; return x>-756&&x<-734&&z>286&&z<302; };
+  for(const b of data.buildings.slice()){ if(!(b.fn in SRC)&&!canteenPart(b)) continue;
+    const r=b.r.map(ring=>{ const o=[]; for(let i=ring.length-2;i>=0;i-=2) o.push(+(2*AX-ring[i]).toFixed(1),+(ring[i+1]+DZ).toFixed(1)); return o; });
+    data.buildings.push({r,t:b.t,...(b.l?{l:b.l}:{}),n:'Hall 13',fn:'Hall 13',s:'n',hx:1,sol:SRC[b.fn]||0}); }
+  for(const b of data.buildings) if(b.fn in SRC) b.sol=SRC[b.fn]; }
 lmsg.textContent='Raising the buildings…'; await tick();
 
 const EXT=1500; // half-extent of the modelled area
@@ -662,7 +669,9 @@ function box(g,cx,cz,w,d,y0,h,ang,col){
   }
 }
 const bInfo=[];
+let _rSave=null;
 for(const b of data.buildings){
+  if(b.hx&&_rSave===null) _rSave=R.st();
   let rings=b.r.map(toPts);
   const outer=rings[0]; if(outer.length<3) continue;
   if(signedArea(outer)<0) outer.reverse();
@@ -722,7 +731,7 @@ for(const b of data.buildings){
     }
   }
   // solar panels on some big flat roofs
-  if(!didHip && area>450 && t!=='house' && R()<0.4 && panels.length<5000)
+  if(!didHip && area>450 && t!=='house' && (b.sol!=null?(R(),b.sol):R()<0.4) && panels.length<5000)
     gridInPoly(rings,4.3,3.4,2.6,(x,z,ang)=>panels.push([x,z,H-0.65+0.45,ang,4,1.9]));
   // landscaping: bushes hugging the walls
   if(area>80) walk(outer.concat([outer[0]]),rr(3.5,5),rr(0,3),(x,z,dx,dz)=>{
@@ -739,6 +748,7 @@ for(const b of data.buildings){
     else labels.push({name,x:cx,z:cz,y:H+(didHip?4:2),rank:Math.sqrt(area)*(1+floors*0.1),cat:bcat(name,t),alt:[b.fn,...(b.alt||[])].filter(Boolean),size:Math.sqrt(area),...(b.feat?{tier:0,kind:'feat',cat:'health'}:{})});
   } else if(b.hn) labels.push({name:b.hn,x:cx,z:cz,y:H+(didHip?3.5:1.2),rank:0,tier:4,kind:'hn'});
 }
+if(_rSave!==null) R.set(_rSave);
 // places from the map data (points + named areas)
 const placeNames=new Set(data.places.map(p=>p.n));
 for(const [k,g] of hallGroups) if(!placeNames.has(k)) labels.push({name:k,x:g.x/g.n,z:g.z/g.n,y:g.H+3,rank:Math.sqrt(g.area)*1.2,cat:'hostel'});

@@ -264,7 +264,7 @@
 
 <div id="title" class="ui">
   <h1>IIT Kanpur <span>in 3D</span></h1>
-  <p>OpenStreetMap data · <a id="aboutLink" role="button" tabindex="0">About</a></p>
+  <p>Made by Nisarg · OpenStreetMap data · <a id="aboutLink" role="button" tabindex="0">About</a></p>
 </div>
 
 <div id="searchWrap" class="ui">
@@ -563,7 +563,7 @@ function glowTexture(inner='rgba(255,214,150,1)'){
 }
 
 /* ---------------- build world ---------------- */
-const data=await (await fetch('campus.json')).json();
+const data=await (await fetch('campus.json?v=20261122')).json();
 // Hall 13: mirror image of Hall 12 (canteen block left out), across the road between them
 { const SRC={'Hall 12 Mess':1,'Hall 12 Block E':0,'Hall 12 Block C':1,'Hall 12 Block F':0,'Hall 12 Block D':0,'Hall 12 Block B':0,'Hall 12 Block A':0,'Hall12 Canteen':0}, AX=-773, DZ=60;
   const canteenPart=b=>{ if(b.n) return false; const q=b.r[0]; let x=0,z=0; for(let i=0;i<q.length;i+=2){x+=q[i];z+=q[i+1];} x/=q.length/2; z/=q.length/2; return x>-756&&x<-734&&z>286&&z<302; };
@@ -2162,7 +2162,7 @@ function pickSpecial(it){ const k=it.special; closeResults(); sq.blur(); sq.valu
 // ---- professors (IIT Kanpur faculty directory)
 const PEOPLE_AT=new Map(); let peopleMeta=null, peopleReady=false;
 function lblByName(n){ if(!n) return null; const k=nrm(n); return cardLabels.find(l=>nrm(l.name)===k)||cardLabels.find(l=>(l.alt||[]).some(a=>nrm(a)===k))||null; }
-fetch('people.json').then(r=>r.json()).then(js=>{ peopleMeta=js;
+fetch('people.json?v=20261122').then(r=>r.json()).then(js=>{ peopleMeta=js;
   for(const p of js.items){ const bl=lblByName(p.b); p.bl=bl;
     if(bl){ if(!PEOPLE_AT.has(bl)) PEOPLE_AT.set(bl,[]); PEOPLE_AT.get(bl).push(p); }
     const nm=p.n.replace(/^(Prof\.?|Dr\.?)\s+/i,'');

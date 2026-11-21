@@ -1388,7 +1388,7 @@ const SKIN=new THREE.MeshLambertMaterial({color:0x9a6a4a,flatShading:true});
 const mk=(g,mat,n)=>{ const m=new THREE.InstancedMesh(g,mat,n); m.frustumCulled=false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(m); return m; };
 const box3=(w,h,d,y,z=0,rx=0)=>{ const g=new THREE.BoxGeometry(w,h,d); if(rx) g.rotateX(rx); g.translate(0,y,z); return g; };
 const head=(y,z=0)=>{ const g=new THREE.IcosahedronGeometry(.15,1); g.translate(0,y,z); return g; };
-const NCAR=0, NRICK=0, NBIKE=isCoarse?16:28, NWALK=isCoarse?200:420;
+const NCAR=0, NRICK=0, NBIKE=isCoarse?10:18, NWALK=isCoarse?14:26;
 const agents={car:[],rick:[],bike:[],walk:[]};
 for(let i=0;i<NCAR;i++) agents.car.push({...spawn(carNet),v:6.5+LR()*3.5});
 for(let i=0;i<NRICK;i++) agents.rick.push({...spawn(carNet),v:4.6+LR()*1.4});
@@ -1436,7 +1436,7 @@ function stepLife(dt,t){
   const vis=LIFE.on;
   if(vis){ _pm.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse); _fr.setFromProjectionMatrix(_pm);
     const R=wk.on?200:THREE.MathUtils.clamp(camDist*1.25,200,1900), Rw=wk.on?130:Math.min(R,600);
-    recycle(agents.car,carNet,R,10); recycle(agents.rick,carNet,R,5); recycle(agents.bike,bikeNet,Math.min(R,900),2); recycle(agents.walk,footNet,Rw,14); }
+    recycle(agents.car,carNet,R,10); recycle(agents.rick,carNet,R,5); recycle(agents.bike,bikeNet,Math.min(R,900),1); recycle(agents.walk,footNet,Rw,1); }
   for(const k in lifeM) lifeM[k].visible=vis; hlPts.visible=tlPts.visible=vis&&nightK>0.01; beams.visible=hlPts.visible;
   const showBirds=vis && nightN<0.55 && wxCur.rain<0.3; birds.visible=showBirds;
   if(!vis) return;

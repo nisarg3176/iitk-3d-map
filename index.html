@@ -1462,7 +1462,7 @@ function applyLights(n){
   wallMat.emissive.copy(winWarm).multiplyScalar(k*1.35);
   headMat.color.copy(C('#9aa0a6')).lerp(C('#fff1c9').multiplyScalar(3.2),k);
   poolMat.opacity=k*0.62; lampGlow.material.opacity=k*0.85;
-  bloom.strength=k*0.85; nightHooks.forEach(f=>f(n,k)); aoMat.opacity=0.62-0.2*n;
+  bloom.strength=liteLvl?0:k*0.85; nightHooks.forEach(f=>f(n,k)); aoMat.opacity=0.62-0.2*n;
 }
 let sunAlt=0;
 function applyAtmos(){
@@ -2353,9 +2353,23 @@ function updateSun(){
 }
 let last=performance.now(), lastRender=0, liveT=0;
 const FRAME_MS=isCoarse?32:0;
+// ---- automatic lite mode: if frames come too slowly, drop the costly effects
+var liteLvl=0; const perf={n:0,slow:0,t0:performance.now()+4000};
+function setLite(lv,quiet){ if(lv<=liteLvl) return; liteLvl=lv;
+  const pr=lv>=2?Math.min(DPR,0.8):Math.min(DPR,1); renderer.setPixelRatio(pr); composer.setPixelRatio(pr);
+  renderer.setSize(innerWidth,innerHeight); composer.setSize(innerWidth,innerHeight);
+  if(sun.castShadow){ sun.castShadow=false; scene.traverse(o=>{ if(o.material){ (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true); } }); }
+  bloom.strength=0; atmosDirty=true; dirty=true; perf.n=perf.slow=0;
+  try{ localStorage.setItem('iitk3d.lite',String(lv)); }catch(e){}
+  if(!quiet) showHint('Switched to lite mode for smoother movement',3500); }
+function watchPerf(now,gap){ if(liteLvl>=2||now<perf.t0||document.hidden||gap>10000) return;
+  if(!perf.n) perf.w0=now; perf.n++; if(gap>45) perf.slow++;
+  if(perf.n>=90||(now-perf.w0>6000&&perf.n>=8)){ if(perf.slow/perf.n>0.6) setLite(liteLvl+1); perf.n=perf.slow=0; } }
+try{ const sv=+localStorage.getItem('iitk3d.lite')||0; const q=new URLSearchParams(location.search).get('lite'); const lv=q!=null?(+q||0):sv; if(q==='0'){ localStorage.removeItem('iitk3d.lite'); perf.t0=1e12; } if(lv) setLite(Math.min(2,lv),true); }catch(e){}
 function frame(now){
   requestAnimationFrame(frame);
   if(now-lastRender<FRAME_MS && !dirty) return;
+  if(lastRender) watchPerf(now,now-lastRender);
   const dt=Math.min(0.1,(now-last)/1000); last=now; const t=now/1000; TIME.value=t;
   if(timeAnim){ const k=Math.min(1,(now-timeAnim.t0)/timeAnim.dur); simMs=timeAnim.from+(timeAnim.to-timeAnim.from)*ease(k); atmosDirty=true;
     if(k>=1){ if(timeAnim.goLive){ live=true; simMs=Date.now(); } timeAnim=null; } }
@@ -2392,7 +2406,7 @@ document.getElementById('loader').classList.add('done');
 requestAnimationFrame(frame);
 flyTo(HOME_T,HOME_OFF,3200);
 window.__ready=true;
-window.__api={setLayer:(...a)=>setLayer(...a),NAV,CLOSED,isClosed,choose,dFrom,dTo,searchItems,runNav,nav,flyTo,camera,controls,THREE,kick,scene,sky,clouds,skyU,agents,lifeM,carNet,enterWalk,exitWalk,setCat,wk,labels,
+window.__api={lite:()=>liteLvl,setLayer:(...a)=>setLayer(...a),NAV,CLOSED,isClosed,choose,dFrom,dTo,searchItems,runNav,nav,flyTo,camera,controls,THREE,kick,scene,sky,clouds,skyU,agents,lifeM,carNet,enterWalk,exitWalk,setCat,wk,labels,
   setTime:(h)=>{ live=false; timeAnim=null; simMs=istDay0(simMs)+h*3600000; atmosDirty=true; },
   setWeather:(w)=>{ weather=w; Object.assign(wxCur,{...WX[w],gc:C(WX[w].gc),cc:C(WX[w].cc)}); atmosDirty=true; },
   setSeason:(s)=>{ seasonMode=s; const S=SEASONS[curSeason()]; SEA.grassMul.value.set(...S.gm); SEA.leafMul.value.set(...S.lm); SEA.dry.value=S.dry; SEA.turn.value=S.turn; SEA.bloom.value=S.bloom; SEA.turnA.value.set(S.ta); SEA.turnB.value.set(S.tb); atmosDirty=true; },

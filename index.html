@@ -128,6 +128,46 @@
   .res.sel,.res:hover{background:rgba(127,127,127,.16)}
   .res b{font-weight:700;color:var(--accent)}
   .nores{padding:12px 14px;font-size:13px;color:var(--ink2)}
+  #bDir{border:0;background:var(--accent);color:#fff;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+  body.night #bDir{color:#1d1a12}
+  #bDir svg{width:17px;height:17px;color:inherit}
+  #dirPanel{display:none;border-radius:18px;padding:12px 12px 10px}
+  body.dir #dirPanel{display:block} body.dir #sbox,body.dir #results,body.dir #chips{display:none!important}
+  .dp-head{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px;font-size:15px}
+  .dp-head button{border:0;background:transparent;color:var(--ink2);font-size:22px;line-height:1;cursor:pointer;padding:0 4px}
+  .dp-in{display:flex;align-items:center;gap:8px}
+  .dp-dots{display:flex;flex-direction:column;align-items:center;gap:3px;width:14px;flex:none}
+  .dp-dots i{width:11px;height:11px;border-radius:50%;display:block}
+  .dp-dots i.s{background:#fff;border:3px solid #1f9d55} .dp-dots i.e{background:#e0262f;border-radius:50% 50% 50% 0;transform:rotate(-45deg)}
+  .dp-dots span{width:2px;height:22px;background:repeating-linear-gradient(var(--ink2) 0 3px,transparent 3px 6px);opacity:.6}
+  .dp-fields{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .dp-fields input{width:100%;height:38px;border-radius:11px;border:1px solid rgba(127,127,127,.28);background:rgba(127,127,127,.1);color:var(--ink);padding:0 11px;font:500 14px Outfit,sans-serif;outline:0}
+  .dp-fields input:focus{border-color:var(--accent)}
+  .dp-fields input::placeholder{color:var(--ink2)}
+  #dSwap{border:0;background:rgba(127,127,127,.14);color:var(--ink);width:34px;height:34px;border-radius:10px;cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center}
+  #dSwap svg{width:17px;height:17px}
+  #dRes{margin-top:8px;border-radius:12px;overflow:hidden;display:none;max-height:min(300px,40vh);overflow-y:auto;background:rgba(127,127,127,.08)}
+  #dRes.open{display:block}
+  #dOut{margin-top:10px;display:none} #dOut.open{display:block}
+  .d-sum{display:flex;align-items:baseline;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(127,127,127,.1);flex-wrap:wrap}
+  .d-sum b{font-size:20px;font-weight:700;color:var(--accent)}
+  .d-sum span{font-size:13px;color:var(--ink2);display:inline-flex;align-items:center;gap:4px}
+  .d-sum span svg{width:15px;height:15px}
+  .d-via{font-size:12px;color:var(--ink2);margin:6px 4px 2px}
+  #dSteps{margin-top:6px;max-height:min(330px,42vh);overflow-y:auto;padding-right:2px}
+  .d-st{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:10px;cursor:pointer;font-size:13.5px;line-height:1.3}
+  .d-st:hover,.d-st.sel{background:rgba(127,127,127,.14)}
+  .d-st i{width:28px;height:28px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(127,127,127,.15);font-style:normal}
+  .d-st i svg{width:16px;height:16px}
+  .d-st em{font-style:normal;font-weight:600}
+  .d-st small{margin-left:auto;color:var(--ink2);font-size:12px;white-space:nowrap;padding-left:6px}
+  .d-msg{font-size:13px;color:var(--ink2);padding:8px 4px}
+  .rpin{position:fixed;left:0;top:0;pointer-events:none;z-index:2;will-change:transform;display:none}
+  .rpin.s{width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#fff;border:4px solid #1f9d55;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+  .rpin.e{width:26px;height:26px;margin:-30px 0 0 -13px;border-radius:50% 50% 50% 0;background:#e0262f;transform-origin:center;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+  .rpin.e::after{content:"";position:absolute;left:8px;top:8px;width:10px;height:10px;border-radius:50%;background:#fff}
+  .d-tog{display:none;margin-left:auto;border:0;background:transparent;color:var(--accent);font:600 13px Outfit,sans-serif;cursor:pointer;padding:0}
+  @media (max-width:720px){ #dSteps{max-height:34vh;display:none} #dOut.steps #dSteps{display:block} .d-tog{display:inline} .d-via{display:none} #dOut.steps .d-via{display:block} .dp-fields input{height:36px} #dirPanel{padding:10px 10px 8px} .dp-head{margin-bottom:6px} }
   #chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;justify-content:flex-end}
   .chip{background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 3px 12px rgba(0,0,0,.1);font-size:12.5px;padding:6px 11px}
   .chip i{width:8px;height:8px;border-radius:50%}
@@ -177,8 +217,22 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
     <input id="sq" type="search" placeholder="Search halls, departments, food, roads…" autocomplete="off" spellcheck="false" aria-label="Search places">
     <button id="sclear" aria-label="Clear">×</button>
+    <button id="bDir" aria-label="Directions" title="Directions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l9.5 9.5-9.5 9.5L2.5 12z"/><path d="M9 14v-3h6M13 9l2 2-2 2"/></svg></button>
   </div>
   <div id="results" class="glass"></div>
+  <div id="dirPanel" class="glass">
+    <div class="dp-head"><b>Directions</b><button id="dClose" aria-label="Close directions">×</button></div>
+    <div class="dp-in">
+      <div class="dp-dots"><i class="s"></i><span></span><i class="e"></i></div>
+      <div class="dp-fields">
+        <input id="dFrom" type="search" placeholder="From: choose a place" autocomplete="off" spellcheck="false" aria-label="From">
+        <input id="dTo" type="search" placeholder="To: choose a place" autocomplete="off" spellcheck="false" aria-label="To">
+      </div>
+      <button id="dSwap" aria-label="Swap" title="Swap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v15M3.5 15.5L7 19l3.5-3.5M17 20V5M13.5 8.5L17 5l3.5 3.5"/></svg></button>
+    </div>
+    <div id="dRes"></div>
+    <div id="dOut"></div>
+  </div>
   <div id="chips"></div>
 </div>
 
@@ -1641,6 +1695,172 @@ function flyTo(t,off,dur=1800){ fly={t0:performance.now(),dur,fromP:camera.posit
 document.getElementById('bReset').onclick=()=>{ if(wk.on) exitWalk(true); setCat('all',false); flyTo(HOME_T,HOME_OFF); };
 
 /* ---------------- loop ---------------- */
+/* ================= DIRECTIONS (from / to) ================= */
+const NAV=(()=>{
+  const nodes=[], key=new Map(), adj=[];
+  const nid=(x,z)=>{ const k=Math.round(x*10)+','+Math.round(z*10); let i=key.get(k); if(i===undefined){ i=nodes.length; key.set(k,i); nodes.push([x,z]); adj.push([]); } return i; };
+  const GEN={footway:'footpath',path:'footpath',pedestrian:'walkway',steps:'steps',cycleway:'cycle track',crossing:'crossing',service:'service road',track:'track'};
+  for(const r of data.roads){ if(!ROAD[r.t]||r.t==='runway'||r.t==='taxiway') continue;
+    const nm=r.n?cleanName(r.n):(GEN[r.t]||'road'), named=!!r.n, p=r.p; let prev=-1;
+    for(let i=0;i<p.length;i+=2){ const k=nid(p[i],p[i+1]);
+      if(prev>=0&&prev!==k){ const d=Math.hypot(nodes[k][0]-nodes[prev][0],nodes[k][1]-nodes[prev][1]); adj[prev].push({to:k,d,nm,named}); adj[k].push({to:prev,d,nm,named}); }
+      prev=k; } }
+  const comp=new Int32Array(nodes.length).fill(-1); let main=-1, mainN=0;
+  for(let s=0,c=0;s<nodes.length;s++,c++){ if(comp[s]>=0){ c--; continue; } let n=0; const st=[s]; comp[s]=c;
+    while(st.length){ const x=st.pop(); n++; for(const e of adj[x]) if(comp[e.to]<0){ comp[e.to]=c; st.push(e.to); } }
+    if(n>mainN){ mainN=n; main=c; } }
+  const edges=[]; for(let a=0;a<nodes.length;a++) if(comp[a]===main) for(const e of adj[a]) if(e.to>a) edges.push({a,b:e.to,d:e.d,nm:e.nm,named:e.named});
+  return {nodes,adj,edges};
+})();
+function navSnap(x,z){ let best=null;
+  for(const e of NAV.edges){ const A=NAV.nodes[e.a], B=NAV.nodes[e.b]; const dx=B[0]-A[0], dz=B[1]-A[1], L2=dx*dx+dz*dz||1;
+    const t=THREE.MathUtils.clamp(((x-A[0])*dx+(z-A[1])*dz)/L2,0,1), px=A[0]+dx*t, pz=A[1]+dz*t, d=Math.hypot(x-px,z-pz);
+    if(!best||d<best.d) best={e,t,px,pz,d}; }
+  return best; }
+function navRoute(fx,fz,tx,tz){
+  const sA=navSnap(fx,fz), sB=navSnap(tx,tz); if(!sA||!sB) return null;
+  const N=NAV.nodes.length, dist=new Float64Array(N).fill(Infinity), prev=new Int32Array(N).fill(-2), pnm=new Array(N);
+  const H=[]; const push=(d,i)=>{ H.push([d,i]); let k=H.length-1; while(k){ const p=(k-1)>>1; if(H[p][0]<=H[k][0]) break; [H[p],H[k]]=[H[k],H[p]]; k=p; } };
+  const pop=()=>{ const top=H[0], last=H.pop(); if(H.length){ H[0]=last; let k=0; for(;;){ const l=2*k+1,r=l+1; let m=k; if(l<H.length&&H[l][0]<H[m][0]) m=l; if(r<H.length&&H[r][0]<H[m][0]) m=r; if(m===k) break; [H[m],H[k]]=[H[k],H[m]]; k=m; } } return top; };
+  const ea=sA.e; dist[ea.a]=sA.t*ea.d; prev[ea.a]=-1; pnm[ea.a]=ea.nm; push(dist[ea.a],ea.a);
+  if((1-sA.t)*ea.d<dist[ea.b]){ dist[ea.b]=(1-sA.t)*ea.d; prev[ea.b]=-1; pnm[ea.b]=ea.nm; push(dist[ea.b],ea.b); }
+  while(H.length){ const [d,i]=pop(); if(d>dist[i]) continue;
+    for(const e of NAV.adj[i]){ const nd=d+e.d; if(nd<dist[e.to]){ dist[e.to]=nd; prev[e.to]=i; pnm[e.to]=e.nm; push(nd,e.to); } } }
+  const eb=sB.e; let end, tot;
+  const ca=dist[eb.a]+sB.t*eb.d, cb=dist[eb.b]+(1-sB.t)*eb.d; if(ca<=cb){ end=eb.a; tot=ca; } else { end=eb.b; tot=cb; }
+  const pts=[], nms=[], deg=[];
+  const add=(x,z,nm,dg)=>{ const L=pts[pts.length-1]; if(L&&Math.hypot(L[0]-x,L[1]-z)<0.3) return; pts.push([x,z]); nms.push(nm); deg.push(dg); };
+  if(ea===eb && Math.abs(sA.t-sB.t)*ea.d<=tot){ add(fx,fz,ea.nm,2); add(sA.px,sA.pz,ea.nm,2); add(sB.px,sB.pz,ea.nm,2); }
+  else { const chain=[]; for(let i=end;i>=0;i=prev[i]) chain.push(i); chain.reverse();
+    add(fx,fz,ea.nm,2); add(sA.px,sA.pz,pnm[chain[0]],2);
+    for(let k=0;k<chain.length;k++){ const i=chain[k]; add(NAV.nodes[i][0],NAV.nodes[i][1],k+1<chain.length?pnm[chain[k+1]]:eb.nm,NAV.adj[i].length); }
+    add(sB.px,sB.pz,eb.nm,2); }
+  add(tx,tz,null,2);
+  return {pts,nms,deg,sB};
+}
+const fmtD=m=>m<95?Math.max(5,Math.round(m/5)*5)+' m':m<995?Math.round(m/10)*10+' m':(m/1000).toFixed(1)+' km';
+const fmtT=min=>min<60?Math.max(1,Math.round(min))+' min':Math.floor(min/60)+' h '+Math.round(min%60)+' min';
+const GENERIC=new Set(['footpath','walkway','steps','cycle track','crossing','service road','track','road']);
+const onto=nm=>GENERIC.has(nm)?'the '+nm:'<em>'+esc(nm)+'</em>';
+const ARW={straight:'M12 20V5M6.5 10.5L12 5l5.5 5.5',left:'M17 20v-7a4 4 0 0 0-4-4H5M9 5L5 9l4 4',right:'M7 20v-7a4 4 0 0 1 4-4h8M15 5l4 4-4 4',
+  sleft:'M16 20v-6L8 6M8 12V6h6',sright:'M8 20v-6l8-8M16 12V6h-6',uleft:'M15 20V9a4 4 0 0 0-8 0v4M4 10l3 3 3-3',uright:'M9 20V9a4 4 0 0 1 8 0v4M14 10l3 3 3-3',
+  start:'M12 3a6 6 0 0 1 6 6c0 4.5-6 12-6 12S6 13.5 6 9a6 6 0 0 1 6-6z',end:'M5 21V4M5 4h11l-2 4 2 4H5'};
+const arw=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${ARW[k]}"/></svg>`;
+function navSteps(R,destName){
+  const P=R.pts, cum=[0]; for(let i=1;i<P.length;i++) cum.push(cum[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));
+  const total=cum[cum.length-1];
+  const at=s=>{ s=THREE.MathUtils.clamp(s,0,total); let i=1; while(i<cum.length-1&&cum[i]<s) i++; const k=(s-cum[i-1])/((cum[i]-cum[i-1])||1); return [P[i-1][0]+(P[i][0]-P[i-1][0])*k,P[i-1][1]+(P[i][1]-P[i-1][1])*k]; };
+  const turnAt=j=>{ const a=at(cum[j]-12), b=at(cum[j]+12), h1x=P[j][0]-a[0], h1z=P[j][1]-a[1], h2x=b[0]-P[j][0], h2z=b[1]-P[j][1];
+    return Math.atan2(h1x*h2z-h1z*h2x, h1x*h2x+h1z*h2z)*180/Math.PI; };
+  let steps=[], cur={nm:R.nms[0],d:0,i0:0,turn:null};
+  for(let i=0;i<P.length-1;i++){
+    if(i>0){ const nm=R.nms[i]; const tr=turnAt(i);
+      if(nm!==cur.nm || (Math.abs(tr)>55 && R.deg[i]>=3)){ steps.push(cur); cur={nm,d:0,i0:i,turn:tr}; } }
+    cur.d+=cum[i+1]-cum[i]; }
+  steps.push(cur);
+  // fold tiny connector steps into their neighbours, then rejoin same-name runs
+  for(let k=1;k<steps.length;k++){ if(steps[k].d<9 && steps.length>1){ steps[k-1].d+=steps[k].d; if(steps[k+1]&&steps[k+1].turn!==null&&Math.abs(steps[k+1].turn)<25) steps[k+1].turn=steps[k].turn; steps.splice(k,1); k--; } }
+  if(steps.length>1&&steps[0].d<9){ steps[1].d+=steps[0].d; steps[1].i0=0; steps[1].turn=null; steps.shift(); }
+  for(let k=1;k<steps.length;k++){ if(steps[k].nm===steps[k-1].nm && Math.abs(steps[k].turn)<55){ steps[k-1].d+=steps[k].d; steps.splice(k,1); k--; } }
+  const out=steps.map((s,k)=>{
+    const p=P[s.i0];
+    if(k===0){ const b=at(Math.min(total,cum[s.i0]+20)); const br=(Math.atan2(b[0]-p[0],-(b[1]-p[1]))*180/Math.PI+360)%360;
+      const card=['north','north-east','east','south-east','south','south-west','west','north-west'][Math.round(br/45)%8];
+      return {ic:'start',txt:`Head ${card} on ${onto(s.nm)}`,d:s.d,p}; }
+    const a=s.turn, side=a>0?'right':'left', A=Math.abs(a); let ic, verb;
+    if(A<25){ ic='straight'; verb='Continue straight'; } else if(A<60){ ic='s'+side; verb='Slight '+side; } else if(A<140){ ic=side; verb='Turn '+side; } else { ic='u'+side; verb='Sharp '+side; }
+    const same=steps[k-1].nm===s.nm;
+    return {ic,txt:same?`${verb} to stay on ${onto(s.nm)}`:`${verb} onto ${onto(s.nm)}`,d:s.d,p}; });
+  // arrival side
+  const n=P.length, q=P[n-2], last=P[n-1], pr=at(cum[n-2]-15); let sideTxt='';
+  if(Math.hypot(last[0]-q[0],last[1]-q[1])>6){ const cr=(q[0]-pr[0])*(last[1]-q[1])-(q[1]-pr[1])*(last[0]-q[0]); sideTxt=cr>0?' on your right':' on your left'; }
+  out.push({ic:'end',txt:`Arrive at <em>${esc(destName)}</em>${sideTxt}`,d:0,p:last});
+  const named={}; for(const s of steps) if(!GENERIC.has(s.nm)) named[s.nm]=(named[s.nm]||0)+s.d;
+  const via=Object.entries(named).sort((a,b)=>b[1]-a[1]).slice(0,2).map(x=>x[0]);
+  return {steps:out,total,cum,via};
+}
+// route line on the ground
+const RU={uW:{value:3},uT:{value:0},uProg:{value:0}};
+const routeMat=new THREE.ShaderMaterial({uniforms:RU,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4,
+  vertexShader:`attribute float side; attribute float along; attribute vec2 nrm; uniform float uW; varying float vA; varying float vS;
+    void main(){ vec3 p=position; p.x+=nrm.x*side*uW; p.z+=nrm.y*side*uW; vA=along; vS=side; gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.); }`,
+  fragmentShader:`uniform float uW,uT,uProg; varying float vA; varying float vS;
+    void main(){ if(vA>uProg) discard; float s=abs(vS);
+      vec3 col=vec3(.09,.36,.86); col=mix(col,vec3(.62,.8,1.),smoothstep(.72,.82,s)*.8);
+      float k=fract(vA/(uW*3.2)-uT*.9); float dash=step(k,.38)*(1.-smoothstep(.28,.4,s));
+      col=mix(col,vec3(.5,.72,1.),dash*.8);
+      gl_FragColor=vec4(col,.96*(1.-smoothstep(.93,1.,s))); }`});
+const routeMesh=new THREE.Mesh(new THREE.BufferGeometry(),routeMat); routeMesh.frustumCulled=false; routeMesh.renderOrder=16; routeMesh.visible=false; scene.add(routeMesh);
+function buildRouteMesh(P,cum){
+  const pos=[],sd=[],al=[],nr=[],idx=[];
+  for(let i=0;i<P.length;i++){ const a=P[Math.max(0,i-1)], b=P[Math.min(P.length-1,i+1)]; let dx=b[0]-a[0], dz=b[1]-a[1]; const l=Math.hypot(dx,dz)||1; dx/=l; dz/=l;
+    let nx=-dz, nz=dx;
+    if(i>0&&i<P.length-1){ let ux=P[i][0]-a[0],uz=P[i][1]-a[1]; const ul=Math.hypot(ux,uz)||1; ux/=ul; uz/=ul; const m=Math.max(.35,(-uz)*nx+ux*nz); nx/=m; nz/=m; }
+    for(const s of [-1,1]){ pos.push(P[i][0],0.62,P[i][1]); sd.push(s); al.push(cum[i]); nr.push(nx,nz); }
+    if(i) { const o=(i-1)*2; idx.push(o,o+1,o+2,o+1,o+3,o+2); } }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setAttribute('side',new THREE.Float32BufferAttribute(sd,1));
+  g.setAttribute('along',new THREE.Float32BufferAttribute(al,1)); g.setAttribute('nrm',new THREE.Float32BufferAttribute(nr,2)); g.setIndex(idx);
+  routeMesh.geometry.dispose(); routeMesh.geometry=g; }
+const pinS=document.createElement('div'), pinE=document.createElement('div'); pinS.className='rpin s'; pinE.className='rpin e'; document.body.append(pinS,pinE);
+const nav={from:null,to:null,route:null,t0:0,len:0};
+const _pv=new THREE.Vector3();
+function placePin(el,p){ if(!p){ el.style.display='none'; return; } _pv.set(p[0],0.8,p[1]).project(camera);
+  if(_pv.z>1||Math.abs(_pv.x)>1.2||Math.abs(_pv.y)>1.2){ el.style.display='none'; return; }
+  el.style.display='block'; const x=(_pv.x*.5+.5)*innerWidth, y=(-_pv.y*.5+.5)*innerHeight;
+  el.style.transform=`translate(${x|0}px,${y|0}px)`+(el===pinE?' rotate(-45deg)':''); }
+function stepNav(now){
+  if(!routeMesh.visible){ pinS.style.display=pinE.style.display='none'; return; }
+  RU.uT.value=now/1000; RU.uW.value=wk.on?1.3:THREE.MathUtils.clamp(camDist*.0055,1.8,11);
+  const k=Math.min(1,(now-nav.t0)/1400); RU.uProg.value=nav.len*ease(k)+1;
+  placePin(pinS,nav.route.P[0]); placePin(pinE,nav.route.P[nav.route.P.length-1]); dirty=true; }
+// panel UI
+const dFrom=document.getElementById('dFrom'), dTo=document.getElementById('dTo'), dRes=document.getElementById('dRes'), dOut=document.getElementById('dOut');
+let dField=null, dList=[], dSel=0;
+function suggest(raw){ let q=nrm(raw); for(const [a,b] of Object.entries(SYN)) if(q===a) q=b; const qc=q.replace(/ /g,'');
+  return searchItems.map(it=>[searchScore(it,q,qc),it]).filter(x=>x[0]>0).sort((a,b)=>b[0]-a[0]).slice(0,7).map(x=>x[1]); }
+function renderD(){ const raw=dField.value.trim(); if(!raw){ dRes.classList.remove('open'); return; }
+  dList=suggest(raw); dSel=0;
+  dRes.innerHTML=dList.length?dList.map((it,i)=>`<div class="res${i===0?' sel':''}" data-i="${i}"><i style="background:${it.l.kind==='lane'?'#8b8f96':it.l.kind==='feat'?'#e0262f':CATCOL[it.l.cat]||CATCOL.civic}"></i><span>${esc(it.l.name)}</span><small>${it.type}</small></div>`).join(''):'<div class="nores">No places match “'+esc(raw)+'”</div>';
+  dRes.classList.add('open'); }
+function choose(field,l){ field.value=l.name; nav[field===dFrom?'from':'to']=l; dRes.classList.remove('open'); field.blur();
+  if(nav.from&&nav.to) runNav(); else (field===dFrom?dTo:dFrom).focus(); }
+for(const f of [dFrom,dTo]){
+  f.addEventListener('focus',()=>{ dField=f; if(f.value.trim()&&!nav[f===dFrom?'from':'to']) renderD(); else dRes.classList.remove('open'); });
+  f.addEventListener('input',()=>{ dField=f; nav[f===dFrom?'from':'to']=null; renderD(); });
+  f.addEventListener('keydown',e=>{ if(e.key==='ArrowDown'){ dSel=Math.min(dList.length-1,dSel+1); [...dRes.children].forEach((c,i)=>c.classList.toggle('sel',i===dSel)); e.preventDefault(); }
+    else if(e.key==='ArrowUp'){ dSel=Math.max(0,dSel-1); [...dRes.children].forEach((c,i)=>c.classList.toggle('sel',i===dSel)); e.preventDefault(); }
+    else if(e.key==='Enter'&&dList[dSel]&&dRes.classList.contains('open')) choose(f,dList[dSel].l);
+    else if(e.key==='Escape'){ dRes.classList.remove('open'); f.blur(); } }); }
+dRes.addEventListener('pointerdown',e=>{ const r=e.target.closest('.res'); if(r&&dField){ e.preventDefault(); choose(dField,dList[+r.dataset.i].l); } });
+document.getElementById('dSwap').onclick=()=>{ [nav.from,nav.to]=[nav.to,nav.from]; [dFrom.value,dTo.value]=[dTo.value,dFrom.value]; if(nav.from&&nav.to) runNav(); };
+function openDir(){ document.body.classList.add('dir'); closeResults(); closePanel();
+  if(focusLbl&&!nav.to){ nav.to=focusLbl; dTo.value=focusLbl.name; }
+  setTimeout(()=>(nav.to&&!nav.from?dFrom:!nav.to?dTo:dFrom).focus(),30); }
+function closeDir(){ document.body.classList.remove('dir'); dRes.classList.remove('open'); routeMesh.visible=false; nav.route=null; dOut.classList.remove('open');
+  nav.from=nav.to=null; dFrom.value=dTo.value=''; kick(); }
+document.getElementById('bDir').onclick=openDir; document.getElementById('dClose').onclick=closeDir;
+const WALK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="1.8"/><path d="M9 21l2.5-6.5M15.5 21l-2-5-2-3 .8-4.5L9 10l-1 3.5M12.3 8.5l2.7 2.5 3 .5"/></svg>';
+const BIKE_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5l4-7h6l3 7M9.5 9.5l3 7h-7M15 6h2l-1.5 3.5"/></svg>';
+function runNav(){
+  if(nav.from===nav.to){ dOut.innerHTML='<div class="d-msg">Start and destination are the same place.</div>'; dOut.classList.add('open'); routeMesh.visible=false; return; }
+  const R=navRoute(nav.from.x,nav.from.z,nav.to.x,nav.to.z);
+  if(!R){ dOut.innerHTML='<div class="d-msg">Couldn’t find a route between these places.</div>'; dOut.classList.add('open'); return; }
+  const S=navSteps(R,nav.to.name); nav.route={P:R.pts,steps:S.steps}; nav.len=S.total; nav.t0=performance.now();
+  buildRouteMesh(R.pts,S.cum); routeMesh.visible=true;
+  if(wk.on) exitWalk(true); if(catFilter) setCat('all',false); setFocus(null);
+  dOut.innerHTML=`<div class="d-sum"><b>${fmtD(S.total)}</b><span>${WALK_IC}${fmtT(S.total/75)}</span><span>${BIKE_IC}${fmtT(S.total/220)}</span><button class="d-tog">Steps</button></div>`+
+    (S.via.length?`<div class="d-via">via ${S.via.map(esc).join(' and ')}</div>`:'')+
+    `<div id="dSteps">${S.steps.map((s,i)=>`<div class="d-st" data-i="${i}"><i>${arw(s.ic)}</i><span>${s.txt}</span><small>${s.d?fmtD(s.d):''}</small></div>`).join('')}</div>`;
+  dOut.classList.add('open'); dOut.classList.remove('steps');
+  dOut.querySelector('.d-tog').onclick=e=>{ const on=dOut.classList.toggle('steps'); e.target.textContent=on?'Hide steps':'Steps'; };
+  dOut.querySelector('#dSteps').onclick=e=>{ const r=e.target.closest('.d-st'); if(!r) return; const s=nav.route.steps[+r.dataset.i];
+    [...r.parentNode.children].forEach(c=>c.classList.toggle('sel',c===r));
+    flyTo(new THREE.Vector3(s.p[0],0,s.p[1]),HOME_OFF.clone().normalize().multiplyScalar(260),1300); idleT=performance.now(); };
+  // frame the whole route
+  let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9; for(const p of R.pts){ x0=Math.min(x0,p[0]); x1=Math.max(x1,p[0]); z0=Math.min(z0,p[1]); z1=Math.max(z1,p[1]); }
+  const ext=Math.max(x1-x0,z1-z0), dist=THREE.MathUtils.clamp(ext*1.25+160,260,2300)*(innerWidth<innerHeight?1.35:1);
+  flyTo(new THREE.Vector3((x0+x1)/2,0,(z0+z1)/2),HOME_OFF.clone().normalize().multiplyScalar(dist),1700); idleT=performance.now(); }
+
 let dirty=true, idleT=performance.now(), atmosDirty=true, shadowDirty=true, camDist=1000;
 function kick(){ dirty=true; }
 controls.addEventListener('change',kick);
@@ -1679,7 +1899,7 @@ function frame(now){
     controls.target.lerpVectors(fly.fromT,fly.toT,e); camera.position.lerpVectors(fly.fromP,fly.toP,e); dirty=true; if(k>=1) fly=null; }
   if(wk.on){ stepWalk(dt,now); dirty=true; }
   else {
-    if(!controls.autoRotate && !fly && !focusLbl && !catFilter && now-idleT>30000){ controls.autoRotate=true; controls.autoRotateSpeed=0.25; }
+    if(!controls.autoRotate && !fly && !focusLbl && !catFilter && !routeMesh.visible && now-idleT>30000){ controls.autoRotate=true; controls.autoRotateSpeed=0.25; }
     controls.update(); if(controls.autoRotate) dirty=true;
     clampTarget();
   }
@@ -1695,7 +1915,7 @@ function frame(now){
   if(marker.visible){ const s=marker.userData.s, k=((now-marker.userData.t0)/1400)%1; marker.children[0].scale.setScalar(s*(1+k*.35)); marker.children[1].scale.setScalar(s*.9); mkMat.opacity=.9*(1-k*.6); }
   sky.position.copy(camera.position); refreshEnv(now);
   if(bloom.strength>0.01) composer.render(); else renderer.render(scene,camera);
-  updateLabels();
+  updateLabels(); stepNav(now);
   dirty=false; lastRender=now;
 }
 renderer.shadowMap.autoUpdate=false;
@@ -1704,7 +1924,7 @@ document.getElementById('loader').classList.add('done');
 requestAnimationFrame(frame);
 flyTo(HOME_T,HOME_OFF,3200);
 window.__ready=true;
-window.__api={flyTo,camera,controls,THREE,kick,scene,sky,clouds,skyU,agents,lifeM,carNet,enterWalk,exitWalk,setCat,wk,labels,
+window.__api={choose,dFrom,dTo,searchItems,runNav,nav,flyTo,camera,controls,THREE,kick,scene,sky,clouds,skyU,agents,lifeM,carNet,enterWalk,exitWalk,setCat,wk,labels,
   setTime:(h)=>{ live=false; timeAnim=null; simMs=istDay0(simMs)+h*3600000; atmosDirty=true; },
   setWeather:(w)=>{ weather=w; Object.assign(wxCur,{...WX[w],gc:C(WX[w].gc),cc:C(WX[w].cc)}); atmosDirty=true; },
   setSeason:(s)=>{ seasonMode=s; const S=SEASONS[curSeason()]; SEA.grassMul.value.set(...S.gm); SEA.leafMul.value.set(...S.lm); SEA.dry.value=S.dry; SEA.turn.value=S.turn; SEA.bloom.value=S.bloom; SEA.turnA.value.set(S.ta); SEA.turnB.value.set(S.tb); atmosDirty=true; },

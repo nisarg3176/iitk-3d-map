@@ -1090,6 +1090,7 @@ for(const a of data.areas){ if(a.t!=='bleachers') continue; const r=toPts(a.r[0]
 const towerMat=stdMat(0xd9d5cc), tankMat=stdMat(0xcfd8dc), steelMat=stdMat(0xa3a9af), redMat=stdMat(0xc8453a), whiteMat=stdMat(0xf1efe9),
       stoneMat=stdMat(0xd8cfbd), waterMat=new THREE.MeshStandardMaterial({color:0x4aa0c8,roughness:0.1,metalness:0.2}),
       sprayMat=new THREE.MeshLambertMaterial({color:0xffffff,transparent:true,opacity:0.55,depthWrite:false});
+  { const wc0=new THREE.Color(0x4aa0c8), wc1=new THREE.Color(0x1d3a52); nightHooks.push(n=>{ waterMat.color.copy(wc0).lerp(wc1,n*0.85); waterMat.roughness=0.1+0.55*n; waterMat.metalness=0.2-0.2*n; waterMat.envMapIntensity=1-0.7*n; sprayMat.opacity=0.55-0.3*n; }); }
 const powerTowers=[];
 const poiIcons=[];
 for(const d of DP){
@@ -1571,7 +1572,7 @@ const SKIN=new THREE.MeshLambertMaterial({color:0x9a6a4a,flatShading:true});
 const mk=(g,mat,n)=>{ const m=new THREE.InstancedMesh(g,mat,n); m.frustumCulled=false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(m); return m; };
 const box3=(w,h,d,y,z=0,rx=0)=>{ const g=new THREE.BoxGeometry(w,h,d); if(rx) g.rotateX(rx); g.translate(0,y,z); return g; };
 const head=(y,z=0)=>{ const g=new THREE.IcosahedronGeometry(.15,1); g.translate(0,y,z); return g; };
-const NCAR=0, NRICK=0, NBIKE=isCoarse?10:18, NWALK=isCoarse?14:26;
+const NCAR=0, NRICK=0, NBIKE=0, NWALK=0;
 const agents={car:[],rick:[],bike:[],walk:[]};
 for(let i=0;i<NCAR;i++) agents.car.push({...spawn(carNet),v:6.5+LR()*3.5});
 for(let i=0;i<NRICK;i++) agents.rick.push({...spawn(carNet),v:4.6+LR()*1.4});

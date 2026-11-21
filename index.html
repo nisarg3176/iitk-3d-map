@@ -61,6 +61,11 @@
   #title h1 span{color:var(--gold)}
   #title p{margin:5px 0 0;font-size:12px;color:var(--ink2)}
 
+  #lockBtn{z-index:4;right:calc(18px + env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom))}
+  #lockBtn button{gap:7px}
+  #lockBtn .lk-on{display:none} #lockBtn button.on .lk-on{display:block} #lockBtn button.on .lk-off{display:none}
+  @media (max-width:720px){ #lockBtn{bottom:auto;top:calc(188px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right))} #lockBtn span{display:none} #lockBtn button{padding:9px} }
+  body.walking #lockBtn{display:none}
   #dock{left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:center}
   .pill{display:flex;padding:4px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-b);
     backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 6px 24px rgba(0,0,0,.15);transition:background .6s}
@@ -207,6 +212,18 @@
   .lp-grid button b{width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font:700 9px Outfit,sans-serif}
   .lp-grid button b svg{width:13px;height:13px}
   .lp-grid button small{margin-left:auto;color:var(--ink2)}
+  #lpList{margin-top:10px;max-height:34vh;overflow:auto;display:none;border-top:1px solid rgba(127,127,127,.22);padding-top:6px}
+  #lpList.has{display:block}
+  #lpList .li{display:flex;align-items:center;gap:8px;width:100%;padding:7px 4px;border:0;border-radius:8px;background:transparent;color:var(--ink);font:500 12.5px Outfit,sans-serif;text-align:left;cursor:pointer}
+  #lpList .li:hover{background:rgba(127,127,127,.12)}
+  #lpList .li b{width:20px;height:20px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font:700 9px Outfit,sans-serif}
+  #lpList .li b svg{width:12px;height:12px}
+  #lpList .li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #lpList .li em{font-style:normal;color:var(--ink2)}
+  #lpList .li small{color:var(--ink2);flex:none}
+  #lpList .lh{font-size:11px;color:var(--ink2);margin:2px 4px 4px}
+  .upin.hot{z-index:3;transform-origin:13px 13px}
+  .upin.hot b{box-shadow:0 0 0 3px #fff,0 0 0 6px rgba(240,180,60,.9)}
   .lp-grid button.on{border-color:var(--accent);background:rgba(127,127,127,.12)}
   .upin{position:absolute;left:0;top:0;display:none;align-items:center;gap:5px;padding:3px 8px 3px 3px;border-radius:999px;background:var(--lbl-bg);color:var(--lbl-ink);border:1px solid var(--lbl-b);box-shadow:0 2px 8px rgba(0,0,0,.18);font:600 11.5px/1 Outfit,sans-serif;white-space:nowrap;pointer-events:auto;cursor:pointer;will-change:transform}
   .upin b{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font:700 9px Outfit,sans-serif;flex:none}
@@ -315,6 +332,10 @@
   <label class="tog"><input type="checkbox" id="lifeT" checked><span></span>Traffic, people &amp; birds</label>
 </div>
 
+<div id="lockBtn" class="ui pill round"><button id="bLock" aria-label="Lock viewing angle" aria-pressed="false" title="Lock viewing angle (zoom and move only)">
+  <svg class="lk-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>
+  <svg class="lk-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+  <span id="lockTxt">Lock angle</span></button></div>
 <div id="dock" class="ui">
   <div class="pill">
     <button id="bSky" aria-label="Time, weather and season" title="Time, weather & season">
@@ -339,7 +360,7 @@
   </div>
 </div>
 <div id="card" class="ui glass" role="dialog" aria-label="Place details"></div>
-<div id="layPop" class="ui glass"><div class="lp-h"><span>Useful spots</span><button id="lpX" aria-label="Close">×</button></div><div class="lp-grid" id="lpGrid"></div></div>
+<div id="layPop" class="ui glass"><div class="lp-h"><span>Useful spots</span><button id="lpX" aria-label="Close">×</button></div><div class="lp-grid" id="lpGrid"></div><div id="lpList"></div></div>
 <div id="me"></div>
 <div id="hint" class="ui">Drag to move · pinch to zoom · two fingers to rotate</div>
 <div id="joy" class="ui glass"><i></i></div>
@@ -564,6 +585,9 @@ function glowTexture(inner='rgba(255,214,150,1)'){
 
 /* ---------------- build world ---------------- */
 const data=await (await fetch('campus.json?v=20261122')).json();
+// Counselling Service is now CMHW (Center for Mental Health and Wellbeing)
+for(const b of data.buildings||[]) if(b.n==='Counselling Service'){ b.n='CMHW'; b.fn='Center for Mental Health and Wellbeing'; b.alt=['Center for Mental Health and Wellbeing','Counselling Service','Mental health centre','Wellbeing centre']; }
+for(const r of data.info||[]) if(r.n==='Counselling Service') r.n='CMHW';
 // Hall 13: mirror image of Hall 12 (canteen block left out), across the road between them
 { const SRC={'Hall 12 Mess':1,'Hall 12 Block E':0,'Hall 12 Block C':1,'Hall 12 Block F':0,'Hall 12 Block D':0,'Hall 12 Block B':0,'Hall 12 Block A':0,'Hall12 Canteen':0}, AX=-773, DZ=60;
   const canteenPart=b=>{ if(b.n) return false; const q=b.r[0]; let x=0,z=0; for(let i=0;i<q.length;i+=2){x+=q[i];z+=q[i+1];} x/=q.length/2; z/=q.length/2; return x>-756&&x<-734&&z>286&&z<302; };
@@ -741,7 +765,7 @@ const SKIP=/substation|laundry|tv room|reading room|security control|central sto
 function cleanName(n){ return n.replace(/,?\s*(@\s*)?(IIT Kanpur|IITK)\b/ig,'').replace(/^P K /,'PK ').replace(/^Dept\.? Of /i,'Dept of ').replace(/^H\.R\. /,'HR ').replace(/^Hall(\d)/,'Hall $1').replace(/\s+/g,' ').trim() || n; }
 const TIER1=/kelkar|main auditorium|computer cent|outreach auditorium|lecture hall complex|faculty building|rajeev motwani|gurdwara|indoor sports|^flight lab$|director|technopark|health cent|shopping cent|wind tunnel|kadim diwan|^hall \d+$|girls hall|sports stadium|swimming pool|activity centre|open air theatre|airstrip|mt market|old shopping|pronite|hanuman temple|silver jubilee|metro station|^visitor hostel|kendriya|football field|events ground|aces ground|old sports complex/i;
 function bcat(n,t){ if(/lecture|tutorial|^L\d+$/i.test(n)) return 'academic'; if(/hall|hostel|mess|residence|apartment|quarters/i.test(n)) return 'hostel'; if(/canteen|cafe|coffee|restaurant|food/i.test(n)) return 'food';
-  if(/gurdwara|temple|mandir|mosque|church/i.test(n)) return 'worship'; if(/health|hospital|counsel/i.test(n)) return 'health'; if(/sports|stadium|gym/i.test(n)) return 'sports';
+  if(/gurdwara|temple|mandir|mosque|church/i.test(n)) return 'worship'; if(/health|hospital|counsel|cmhw/i.test(n)) return 'health'; if(/sports|stadium|gym/i.test(n)) return 'sports';
   if(/shop|market|store|bank/i.test(n)) return 'shop'; return t==='dormitory'||t==='residential'||t==='house'?'hostel':'academic'; }
 const LANDMARK=/kelkar|main auditorium|computer centre|outreach auditorium|lecture hall complex|faculty building|rajeev motwani|gurdwara|indoor sports|flight lab|director|technopark|health center|shopping center|wind tunnel|kadim diwan|visitor/i;
 const roofBoxes=[];
@@ -861,7 +885,7 @@ for(const b of data.buildings){
     let name=cleanName(b.n); if(b.ab && !name.includes(b.ab)) name+=' ('+b.ab+')';
     const hm=name.match(/^Hall (\d+)\b/i);
     if(hm){ const k='Hall '+hm[1]; const g=hallGroups.get(k)||{x:0,z:0,n:0,H:0,area:0}; g.x+=cx;g.z+=cz;g.n++;g.H=Math.max(g.H,H);g.area+=area; hallGroups.set(k,g); }
-    else labels.push({name,x:cx,z:cz,y:H+(didHip?4:2),rank:Math.sqrt(area)*(1+floors*0.1),cat:bcat(name,t),alt:[b.fn,...(b.alt||[])].filter(Boolean),size:Math.sqrt(area),...(b.feat?{tier:0,kind:'feat',cat:'health'}:{})});
+    else labels.push({name,x:cx,z:cz,y:H+(didHip?4:2),rank:Math.sqrt(area)*(1+floors*0.1),cat:bcat(name,t),alt:[b.fn,...(b.alt||[])].filter(Boolean),size:Math.sqrt(area),...(b.feat?{kind:'feat',cat:'health'}:{})});
   } else if(b.hn) labels.push({name:b.hn,x:cx,z:cz,y:H+(didHip?3.5:1.2),rank:0,tier:4,kind:'hn'});
 }
 if(_rSave!==null) R.set(_rSave);
@@ -1109,6 +1133,7 @@ for(const d of DP){
   const doorMat=new THREE.MeshLambertMaterial({vertexColors:true,emissive:0x000000});
   const dm=new THREE.Mesh(doorG.build(),doorMat); dm.receiveShadow=true; scene.add(dm);
   nightHooks.push((n,k)=>{ doorMat.emissive.setRGB(1.0*k,0.72*k,0.38*k); });
+  nightHooks.push(n=>{ for(const m of waterMats){ m.roughness=0.06+0.5*n; m.envMapIntensity=1-0.6*n; m.metalness=0.1-0.1*n; } });
   addOverlay(flatD,null,12.2); }
 for(const l of (data.lanes||[])) labels.push({name:l.n,x:l.x,z:l.z,y:1.2,rank:0,tier:2.5,kind:'lane'});
 for(const p of poiIcons) labels.push({name:p.t,x:p.x,z:p.z,y:2.2,rank:0,tier:4,kind:'poi'});
@@ -1297,13 +1322,13 @@ for(const l of labels){ const el=document.createElement('div');
   lblRoot.appendChild(el); l.el=el; l.v=new THREE.Vector3(l.x,l.y,l.z); l.w=0; }
 const tmpV=new THREE.Vector3();
 let labelsOn=true;
-let catFilter=null, focusLbl=null;
+let catFilter=null, focusLbl=null, spotsOn=0, lblCamD=1000, angleLock=false;
 function placeLabel(l,W,H,placed){
   tmpV.copy(l.v).project(camera);
   if(!(tmpV.z<1 && Math.abs(tmpV.x)<1.05 && Math.abs(tmpV.y)<1.05)) return false;
   const x=(tmpV.x*.5+.5)*W, y=(-tmpV.y*.5+.5)*H;
   if(!l.w) l.w=l.el.offsetWidth||l.name.length*7+24;
-  const r=[x-l.w/2-4,y-l.dy-4,x+l.w/2+4,y-l.dy+28];
+  const pd=placeLabel.pad||4, r=[x-l.w/2-pd,y-l.dy-pd,x+l.w/2+pd,y-l.dy+28+pd];
   if(placed.some(p=>!(r[2]<p[0]||r[0]>p[2]||r[3]<p[1]||r[1]>p[3]))) return false;
   placed.push(r); l.el.style.transform=`translate(${Math.max(6,Math.min(W-l.w-6,x-l.w/2))|0}px,${(y-l.dy)|0}px)`; return true;
 }
@@ -1311,14 +1336,16 @@ function setVis(l,vis){ if(vis!==l.on){ l.el.classList.toggle('show',vis); l.on=
 function updateLabels(){
   if(!labelsOn) return;
   const W=innerWidth,H=innerHeight, placed=[];
-  let shown=0; const MAX=isCoarse?26:48;
+  let shown=0; const cd=lblCamD=camera.position.distanceTo(controls.target), MAX=isCoarse?(cd>900?9:14):(cd>900?18:28), PAD=isCoarse?10:6;
+  if(spotsOn){ if(focusLbl){ const ok=placeLabel(focusLbl,W,H,placed); setVis(focusLbl,ok); } for(const l of labels) if(l!==focusLbl) setVis(l,false); return; }
+  placeLabel.pad=PAD;
   if(focusLbl){ const ok=placeLabel(focusLbl,W,H,placed); setVis(focusLbl,ok); if(ok) shown++; }
   for(const l of labels){
     if(l===focusLbl) continue;
     let vis=false;
     const d=camera.position.distanceTo(l.v);
-    let reach = l.tier===0 ? 1e9 : l.tier===1 ? 2600 : l.tier===2 ? 700 + l.rank*3 : l.tier===2.5 ? 900 : l.tier===3 ? 420 : 210;
-    if(catFilter && l.tier!==0) reach = (l.cat===catFilter && !l.kind) ? 1e9 : -1;
+    let reach = l.tier===0 ? cd*2.2+700 : l.tier===1 ? Math.min(2600,cd*1.35+250) : l.tier===2 ? 700 + l.rank*3 : l.tier===2.5 ? 900 : l.tier===3 ? 420 : 210;
+    if(catFilter && l.tier!==0) reach = (l.cat===catFilter && (!l.kind||l.kind==='feat')) ? 1e9 : -1;
     if(wk.on) reach=Math.min(reach, l.tier<=1?1100 : l.tier===2.5?140 : l.tier>=3?70 : 420);
     if(d<reach && shown<MAX && placeLabel(l,W,H,placed)){ vis=true; shown++; }
     setVis(l,vis);
@@ -1653,12 +1680,12 @@ document.getElementById('bWalk').onclick=()=>wk.on?exitWalk():enterWalk();
 
 /* ================= SEARCH + CATEGORY FILTERS ================= */
 const nrm=s=>(s||'').toLowerCase().replace(/\b(iit ?k(anpur)?|dept\.?( of)?|department( of)?|the|of|and)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
-const SYN={hospital:'health',doctor:'health',medical:'health',hostel:'hall',mess:'hall',library:'kelkar',lib:'kelkar',cc:'computer centre',temple:'temple',canteen:'canteen',food:'canteen',coffee:'cafe',gym:'sports',pool:'swimming',lhc:'lecture hall',counselling:'counsel',counseling:'counsel',bank:'bank',atm:'atm',airstrip:'airstrip',oat:'open air theatre'};
+const SYN={hospital:'health',doctor:'health',medical:'health',hostel:'hall',mess:'hall',library:'kelkar',lib:'kelkar',cc:'computer centre',temple:'temple',canteen:'canteen',food:'canteen',coffee:'cafe',gym:'sports',pool:'swimming',lhc:'lecture hall',counselling:'cmhw',counseling:'cmhw',counsel:'cmhw',bank:'bank',atm:'atm',airstrip:'airstrip',oat:'open air theatre'};
 const searchItems=[]; { const seen=new Set();
   for(const l of labels){ if(l.kind&&l.kind!=='feat'&&l.kind!=='lane') continue; const k=l.name.toLowerCase(); if(seen.has(k)) continue; seen.add(k);
     const keys=[l.name,...(l.alt||[])].map(nrm).filter(Boolean);
     const acr=nrm(l.name).split(' ').filter(w=>w.length>1||/\d/.test(w)).map(w=>/^\d+$/.test(w)?w:w[0]).join('');
-    searchItems.push({l,keys,acr,type:l.kind==='lane'?'Road':({academic:'Academic',hostel:'Hostel',food:'Food',shop:'Shop',sports:'Sports',worship:'Worship',health:'Health',civic:'Place'})[l.cat]||'Place'}); } }
+    searchItems.push({l,keys,acr,type:l.name==='CMHW'?'Mental health & wellbeing':l.kind==='lane'?'Road':({academic:'Academic',hostel:'Hostel',food:'Food',shop:'Shop',sports:'Sports',worship:'Worship',health:'Health',civic:'Place'})[l.cat]||'Place'}); } }
 function searchScore(it,q,qc){ let best=0;
   for(const k of it.keys){ const kc=k.replace(/ /g,'');
     if(k===q) best=Math.max(best,100); else if(k.startsWith(q)) best=Math.max(best,85); else if((' '+k).includes(' '+q)) best=Math.max(best,70);
@@ -1755,8 +1782,16 @@ document.getElementById('season').addEventListener('click',e=>{ const b=e.target
 document.getElementById('lifeT').onchange=e=>{ LIFE.on=e.target.checked; kick(); };
 document.getElementById('bLabels').onclick=e=>{ labelsOn=!labelsOn; document.body.classList.toggle('hide-labels',!labelsOn); e.currentTarget.classList.toggle('on',labelsOn); kick(); };
 let fly=null;
-function flyTo(t,off,dur=1800){ fly={t0:performance.now(),dur,fromP:camera.position.clone(),fromT:controls.target.clone(),toT:t.clone(),toP:t.clone().add(off)}; kick(); }
-document.getElementById('bReset').onclick=()=>{ if(wk.on) exitWalk(true); setCat('all',false); flyTo(HOME_T,HOME_OFF); };
+function flyTo(t,off,dur=1800,free){ if(angleLock&&!free) off=camera.position.clone().sub(controls.target).normalize().multiplyScalar(off.length()); fly={t0:performance.now(),dur,fromP:camera.position.clone(),fromT:controls.target.clone(),toT:t.clone(),toP:t.clone().add(off)}; kick(); }
+document.getElementById('bReset').onclick=()=>{ if(wk.on) exitWalk(true); setCat('all',false); flyTo(HOME_T,HOME_OFF,1800,true); };
+// ---- lock viewing angle: one finger moves, pinch zooms, no rotate or tilt
+const bLock=document.getElementById('bLock');
+function setAngleLock(on){ angleLock=on; bLock.classList.toggle('on',on); bLock.setAttribute('aria-pressed',on);
+  document.getElementById('lockTxt').textContent=on?'Angle locked':'Lock angle';
+  controls.enableRotate=!on; controls.touches.TWO=on?THREE.TOUCH.DOLLY_PAN:THREE.TOUCH.DOLLY_ROTATE;
+  if(on) controls.autoRotate=false;
+  showHint(on?'Angle locked · double-tap to zoom in':'Angle unlocked',3000); kick(); }
+bLock.onclick=()=>setAngleLock(!angleLock);
 
 /* ---------------- loop ---------------- */
 /* ================= DIRECTIONS (from / to) ================= */
@@ -2036,6 +2071,7 @@ function showPlaceCard(pl){
   cardPl=pl; const inf=infoFor(pl)||{}; const st=openState(inf.h);
   const util=pl.util?UT[pl.util]:null;
   const kind=[util?`<i style="background:${util[3]}"></i>${util[1]}`:`<i style="background:${pl.kind==='feat'?'#e0262f':CATCOL[pl.cat]||CATCOL.civic}"></i>${CATN[pl.cat]||'Place'}`,
+    pl.name==='CMHW'?'Center for Mental Health and Wellbeing':'',
     inf.k&&!/^(yes|university)$/.test(inf.k)?titleCase(inf.k):''].filter(Boolean).join(' · ');
   const wc={yes:'Step-free',limited:'Partly step-free',no:'Not step-free'}[inf.wc];
   const inside=insideOf(pl);
@@ -2087,11 +2123,19 @@ const lblByEl=new Map(labels.map(l=>[l.el,l]));
 lblRoot.addEventListener('click',e=>{ const el=e.target.closest('.lbl'); if(!el) return; const l=lblByEl.get(el); if(!l||l.kind==='lane'||l.kind==='hn') return;
   if(l.kind==='poi'){ const t={toilets:'toilets',water:'water',bike:'bikepark',atm:'atm',ev:'ev',post:'post'}[l.name]; if(t){ showPlaceCard({name:UT[t][1].replace(/s$/,''),x:l.x,z:l.z,util:t,cat:'civic'}); } return; }
   openPlace(l,false); });
-const ray=new THREE.Raycaster(), _ndc=new THREE.Vector2(); let tapD=null;
+const ray=new THREE.Raycaster(), _ndc=new THREE.Vector2(); let tapD=null, lastTap=null;
+const _gp=new THREE.Plane(new THREE.Vector3(0,1,0),0), _gv=new THREE.Vector3();
 canvas.addEventListener('pointerdown',e=>{ tapD={x:e.clientX,y:e.clientY,t:performance.now()}; });
 canvas.addEventListener('pointerup',e=>{ if(!tapD||wk.on) return; const moved=Math.hypot(e.clientX-tapD.x,e.clientY-tapD.y), dt=performance.now()-tapD.t; tapD=null;
   if(moved>7||dt>450) return;
   _ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1); ray.setFromCamera(_ndc,camera);
+  const now2=performance.now();
+  if(lastTap&&now2-lastTap.t<320&&Math.hypot(e.clientX-lastTap.x,e.clientY-lastTap.y)<30){ lastTap=null;
+    const h2=ray.intersectObjects([walls,roofs],false)[0], gp=h2?_gv.set(h2.point.x,0,h2.point.z):ray.ray.intersectPlane(_gp,_gv);
+    if(gp){ const cd=camera.position.distanceTo(controls.target), nd=Math.max(controls.minDistance+20,cd*0.45);
+      flyTo(gp.clone(),camera.position.clone().sub(controls.target).normalize().multiplyScalar(nd),650,true); idleT=performance.now(); }
+    return; }
+  lastTap={x:e.clientX,y:e.clientY,t:now2};
   const hit=ray.intersectObjects([walls,roofs],false)[0];
   if(!hit){ closeCard(); closeLay(); return; }
   const b=buildingAt(hit.point.x,hit.point.z)||buildingAt(hit.point.x-hit.face.normal.x*.5,hit.point.z-hit.face.normal.z*.5);
@@ -2124,7 +2168,8 @@ document.getElementById('lpX').onclick=closeLay;
 function setLayer(k,on,fit){ if(on) layOn.add(k); else layOn.delete(k);
   [...lpGrid.children].forEach(b=>b.classList.toggle('on',layOn.has(b.dataset.l))); layChip.classList.toggle('on',layOn.size>0);
   layChip.innerHTML=layOn.size?`＋ Useful spots · ${layOn.size}`:'＋ Useful spots';
-  for(const p of pins) p.on=layOn.has(p.u.t);
+  for(const p of pins){ p.on=layOn.has(p.u.t); if(!p.on) p.el.classList.remove('hot'); }
+  spotsOn=layOn.size; renderSpotList();
   if(on&&fit){ const its=utilItems.filter(u=>u.t===k); let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9; for(const p of its){ x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);z0=Math.min(z0,p.z);z1=Math.max(z1,p.z); }
     const ext=Math.max(x1-x0,z1-z0); flyTo(new THREE.Vector3((x0+x1)/2,0,(z0+z1)/2),HOME_OFF.clone().normalize().multiplyScalar(THREE.MathUtils.clamp(ext*1.2+200,300,2200)*(innerWidth<innerHeight?1.35:1)),1500); idleT=performance.now(); }
   kick(); }
@@ -2132,6 +2177,17 @@ lpGrid.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) 
 const pins=utilItems.map(u=>{ const el=document.createElement('div'); el.className='upin'+(u.named&&u.t!=='lecture'?'':' bare');
   el.innerHTML=`<b style="background:${UT[u.t][3]}">${u.t==='lecture'?esc(u.name):UT[u.t][2]}</b>${u.named&&u.t!=='lecture'?`<span>${esc(u.name)}</span>`:''}`; if(u.t==='lecture') el.querySelector('b').style.width='auto',el.querySelector('b').style.padding='0 6px',el.querySelector('b').style.borderRadius='10px';
   lblRoot.appendChild(el); const p={u,el,on:false}; el.addEventListener('click',()=>pinClick(p)); return p; });
+const lpList=document.getElementById('lpList'); let spotRows=[];
+function nearName(u){ if(u._nn) return u._nn; let best=null,bd=1e9; for(const l of cardLabels){ if(l.kind||l.tier>2.5||/^L\d/.test(l.name)) continue; const d=Math.hypot(l.x-u.x,l.z-u.z); if(d<bd){bd=d;best=l;} } return u._nn=best?best.name:'campus'; }
+function renderSpotList(){ if(!layOn.size){ lpList.classList.remove('has'); lpList.innerHTML=''; return; }
+  const ref=me&&me.on?me:controls.target; const its=utilItems.filter(u=>layOn.has(u.t)).map(u=>({u,d:Math.hypot(u.x-ref.x,u.z-ref.z)})).sort((a,b)=>a.d-b.d);
+  spotRows=its.map(o=>o.u);
+  lpList.innerHTML=`<div class="lh">${its.length} spot${its.length>1?'s':''} · nearest to ${me&&me.on?'you':'map centre'} first</div>`+its.map((o,i)=>`<button class="li" data-i="${i}"><b style="background:${UT[o.u.t][3]}">${o.u.t==='lecture'?'L':UT[o.u.t][2]}</b><span>${esc(o.u.name)}${o.u.named?'':`<em> · near ${esc(nearName(o.u))}</em>`}</span><small>${fmtD(o.d)}</small></button>`).join('');
+  lpList.classList.add('has'); }
+lpList.addEventListener('click',e=>{ const b=e.target.closest('.li'); if(!b) return; const u=spotRows[+b.dataset.i]; if(!u) return;
+  const p=pins.find(q=>q.u===u); pins.forEach(q=>q.el.classList.toggle('hot',q===p));
+  flyTo(new THREE.Vector3(u.x,0,u.z),HOME_OFF.clone().normalize().multiplyScalar(320),1300); idleT=performance.now();
+  if(innerWidth<760) closeLay(); if(p) pinClick(p); kick(); });
 function pinClick(p){ const u=p.u; if(u.lbl){ openPlace(u.lbl,false); return; }
   const l=u.named&&cardLabels.find(q=>nrm(q.name)===nrm(u.name)&&Math.hypot(q.x-u.x,q.z-u.z)<120);
   if(l){ openPlace(l,false); return; }
@@ -2253,7 +2309,7 @@ function frame(now){
     controls.target.lerpVectors(fly.fromT,fly.toT,e); camera.position.lerpVectors(fly.fromP,fly.toP,e); dirty=true; if(k>=1) fly=null; }
   if(wk.on){ stepWalk(dt,now); dirty=true; }
   else {
-    if(!controls.autoRotate && !fly && !focusLbl && !catFilter && !routeMesh.visible && now-idleT>30000){ controls.autoRotate=true; controls.autoRotateSpeed=0.25; }
+    if(!angleLock && !controls.autoRotate && !fly && !focusLbl && !catFilter && !routeMesh.visible && now-idleT>30000){ controls.autoRotate=true; controls.autoRotateSpeed=0.25; }
     controls.update(); if(controls.autoRotate) dirty=true;
     clampTarget();
   }
@@ -2278,7 +2334,7 @@ document.getElementById('loader').classList.add('done');
 requestAnimationFrame(frame);
 flyTo(HOME_T,HOME_OFF,3200);
 window.__ready=true;
-window.__api={NAV,CLOSED,isClosed,choose,dFrom,dTo,searchItems,runNav,nav,flyTo,camera,controls,THREE,kick,scene,sky,clouds,skyU,agents,lifeM,carNet,enterWalk,exitWalk,setCat,wk,labels,
+window.__api={setLayer:(...a)=>setLayer(...a),NAV,CLOSED,isClosed,choose,dFrom,dTo,searchItems,runNav,nav,flyTo,camera,controls,THREE,kick,scene,sky,clouds,skyU,agents,lifeM,carNet,enterWalk,exitWalk,setCat,wk,labels,
   setTime:(h)=>{ live=false; timeAnim=null; simMs=istDay0(simMs)+h*3600000; atmosDirty=true; },
   setWeather:(w)=>{ weather=w; Object.assign(wxCur,{...WX[w],gc:C(WX[w].gc),cc:C(WX[w].cc)}); atmosDirty=true; },
   setSeason:(s)=>{ seasonMode=s; const S=SEASONS[curSeason()]; SEA.grassMul.value.set(...S.gm); SEA.leafMul.value.set(...S.lm); SEA.dry.value=S.dry; SEA.turn.value=S.turn; SEA.bloom.value=S.bloom; SEA.turnA.value.set(S.ta); SEA.turnB.value.set(S.tb); atmosDirty=true; },

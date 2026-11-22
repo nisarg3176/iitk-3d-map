@@ -1262,20 +1262,23 @@ for(const d of DP){
     labels.push({name:'Pronite Stage',x,z:z+4,y:8,rank:4,tier:3,cat:'civic',alt:['Pronite','Antaragni stage','Fest stage'],size:10}); }
 
   // ---- Cessna VT-DUM on display near the Flight Lab
-  { const x=-300, z=-662, ang=0.35, wh=C('#f3f1ec'), tri=[C('#e0802f'),C('#f3f1ec'),C('#2f8a3a')];
-    disc(dg,x,z,8.6,0.14,C('#7cbc52'),32);
-    for(let i=0;i<24;i++){ const a=i/24*Math.PI*2; box(dg,x+Math.cos(a)*8,z+Math.sin(a)*8,0.22,0.22,0,1.1,0,tri[i%3]); }
-    const P=(u,v)=>[x+Math.cos(ang)*u-Math.sin(ang)*v, z+Math.sin(ang)*u+Math.cos(ang)*v];
-    let [a,b]=P(0,0); box(dg,a,b,8.4,1.3,0.9,1.35,ang,wh);
-    [a,b]=P(1.2,0); box(dg,a,b,2.6,1.25,2.2,0.7,ang,C('#7fb3bf'));
-    [a,b]=P(0.9,0); box(dg,a,b,1.6,11.2,2.95,0.18,ang,wh);
-    [a,b]=P(-3.9,0); box(dg,a,b,1.4,0.2,2.2,2.2,ang,wh); box(dg,a,b,1.2,3.8,2.1,0.12,ang,wh);
-    [a,b]=P(-3.9,0); box(dg,a,b,1.5,0.24,3.2,0.5,ang,C('#c8453a'));
-    [a,b]=P(4.3,0); box(dg,a,b,0.2,2.2,1.2,0.2,ang,C('#333'));
-    for(const s of [-2.6,2.6]){ [a,b]=P(0.9,s); box(dg,a,b,0.12,0.12,0.9,2.1,ang,wh); }
-    for(const [u,v] of [[2.6,0],[-0.2,-1.2],[-0.2,1.2]]){ [a,b]=P(u,v); box(dg,a,b,0.6,0.25,0,0.6,ang,C('#222')); }
-    markOcc(x,z,9);
-    labels.push({name:'Cessna VT-DUM',x,z,y:5,rank:5,tier:3,cat:'civic',alt:['Plane','Aircraft at airstrip','Aeroplane'],size:10}); }
+  { const x=-300, z=-662, ang=0.35, K=1.6, wh=C('#f3f1ec'), tri=[C('#e0802f'),C('#f3f1ec'),C('#2f8a3a')];
+    disc(dg,x,z,12.5,0.14,C('#7cbc52'),32);
+    for(let i=0;i<30;i++){ const a=i/30*Math.PI*2; box(dg,x+Math.cos(a)*11.8,z+Math.sin(a)*11.8,0.25,0.25,0,1.1,0,tri[i%3]); }
+    const P=(u,v)=>[x+Math.cos(ang)*u*K-Math.sin(ang)*v*K, z+Math.sin(ang)*u*K+Math.cos(ang)*v*K];
+    const B=(u,v,w,d,y,h,col)=>{ const [a,b]=P(u,v); box(dg,a,b,w*K,d*K,y*K,h*K,ang,col); };
+    B(0,0,8.4,1.3,0.9,1.35,wh); B(1.2,0,2.6,1.25,2.2,0.7,C('#7fb3bf')); B(0.9,0,1.6,11.2,2.95,0.18,wh);
+    B(-3.9,0,1.4,0.2,2.2,2.2,wh); B(-3.9,0,1.2,3.8,2.1,0.12,wh); B(-3.9,0,1.5,0.24,3.2,0.5,C('#c8453a'));
+    B(4.3,0,0.2,2.2,1.2,0.2,C('#333'));
+    for(const sd of [-2.6,2.6]) B(0.9,sd,0.12,0.12,0.9,2.1,wh);
+    for(const [u,v] of [[2.6,0],[-0.2,-1.2],[-0.2,1.2]]) B(u,v,0.6,0.25,0,0.6,C('#222'));
+    // a "P" painted on both sides of the fuselage
+    const c=document.createElement('canvas'); c.width=c.height=128; const g=c.getContext('2d'); g.fillStyle='#d62828'; g.font='bold 110px sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText('P',64,70);
+    const tx=new THREE.CanvasTexture(c); tx.colorSpace=THREE.SRGBColorSpace;
+    for(const sd of [-1,1]){ const m=new THREE.Mesh(new THREE.PlaneGeometry(1.3*K,1.3*K),new THREE.MeshBasicMaterial({map:tx,transparent:true,depthWrite:false}));
+      const [a,b]=P(-1.4,sd*0.69); m.position.set(a,1.58*K,b); m.rotation.y=-ang+(sd>0?0:Math.PI); scene.add(m); }
+    markOcc(x,z,13);
+    labels.push({name:'Cessna VT-DUM',x,z,y:7,rank:5,tier:3,cat:'civic',alt:['Plane','Aircraft at airstrip','Aeroplane'],size:12}); }
 
   // ---- main entrance: SIS security huts and the IIT Kanpur signs
   { const hut=(x,z)=>{ box(dg,x,z,3.2,3.2,0,2.7,0,C('#eeeae0')); box(dg,x,z,3.4,3.4,2.7,0.2,0,C('#b4553a'));

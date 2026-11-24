@@ -622,7 +622,7 @@ function glowTexture(inner='rgba(255,214,150,1)'){
 }
 
 /* ---------------- build world ---------------- */
-const data=await (await fetch('campus.json?v=20261127')).json();
+const data=await (await fetch('campus.json?v=20261129')).json();
 data.places=data.places.filter(p=>p.n!=='Wazwan Foods'&&p.n!=='Chocolate Room');
 // Counselling Service is now CMHW (Center for Mental Health and Wellbeing)
 for(const b of data.buildings||[]) if(b.n==='Counselling Service'){ b.n='CMHW'; b.fn='Center for Mental Health and Wellbeing'; b.alt=['Center for Mental Health and Wellbeing','Counselling Service','Mental health centre','Wellbeing centre']; }
@@ -662,7 +662,7 @@ for(const b of data.buildings){
   if(b.n==='Engineering Science Building 2') b.alt=['ESB2','ESB 2','ESB-2',...(b.alt||[])];
   if(['Dept Of BSBE, IITK','ACMS','ACES','Western Labs','Western Lab Extension'].includes(b.n)) b.sty='hallB';
   if(b.n==='Cafe Coffee Day') b.cust='ccd';
-  if(!b.n&&b.x4&&b.t==='retail'){ const r=b.r[0]; let x=0,z=0; for(let i=0;i<r.length;i+=2){x+=r[i];z+=r[i+1];} x/=r.length/2; z/=r.length/2; if(Math.hypot(x+434,z-130)<3) b.cust='mt'; }
+  if(!b.n&&b.x4&&b.t==='retail'){ const r=b.r[0]; let x=0,z=0; for(let i=0;i<r.length;i+=2){x+=r[i];z+=r[i+1];} x/=r.length/2; z/=r.length/2; if(Math.hypot(x+434,z-130)<3) b.cust='mt'; if(Math.hypot(x+726.15,z-838)<3) b.cust='mm'; }
   if(!b.n||b.n==='Old Sports Complex Gym'){ const r=b.r[0]; let x=0,z=0; for(let i=0;i<r.length;i+=2){x+=r[i];z+=r[i+1];} x/=r.length/2; z/=r.length/2;
     if(!b.n&&Math.hypot(x+524,z-951)<6) b.sty='sac';                                   // the SAC block behind the OAT stage
     if(!b.sty&&!/dormitory/.test(b.t||'')&&Math.hypot(x+321,z-558)<60) b.sty='hall3'; }   // old sports complex: Hall 3 colours
@@ -1342,12 +1342,43 @@ for(const d of DP){
 
 
 
-  // ---- Mama Mio chowpatty: tin shed with benches in front of the shops
-  { const x0=-736.5, x1=-729.5, z0=816, z1=862, post=C('#c9a24a');
-    box(dg,(x0+x1)/2,(z0+z1)/2,z1-z0,x1-x0+1,3.3,0.18,Math.PI/2,C('#7b8a92'));
-    for(let z=z0;z<=z1;z+=6.5) for(const x of [x0,x1]) box(dg,x,z,0.25,0.25,0,3.3,0,post);
-    for(let z=z0+3;z<z1-2;z+=5.5){ box(dg,(x0+x1)/2,z,3.6,1.1,0.75,0.12,0,C('#8a5a3a')); for(const s of [-1,1]) box(dg,(x0+x1)/2,z+s*1.2,3.6,0.35,0.42,0.1,0,C('#8a5a3a')); }
-    markOcc((x0+x1)/2,(z0+z1)/2,10); }
+  // ---- Mama Mio chowpatty: row of tin sheds across the road from the shops, benches under each
+  { const x0=-756.5, x1=-749.5, post=C('#c9a24a'), wood=C('#8a5a3a'), roof=C('#7b8a92'), xc=(x0+x1)/2;
+    for(const [z0,z1] of [[815,825],[827,837],[839,849],[851,861]]){ const zc=(z0+z1)/2;
+      box(dg,xc,zc,z1-z0,x1-x0+1,3.3,0.18,Math.PI/2,roof);
+      for(const z of [z0,zc,z1]) for(const x of [x0,x1]) box(dg,x,z,0.25,0.25,0,3.3,0,post);
+      for(const z of [z0+2.5,z1-2.5]){ box(dg,xc,z,3.6,1.1,0.75,0.12,0,wood); for(const sd of [-1,1]) box(dg,xc,z+sd*1.2,3.6,0.35,0.42,0.1,0,wood); }
+      markOcc(xc,zc,7); } }
+
+  // ---- Mama Mio row: five single-storey shops facing the road (west), each with its own name board above a low tin awning
+  { const fx=-728.5, bx=-723.8, T=(x,z,w,d,y,h,c)=>box(dg,x,z,w,d,y,h,0,typeof c==='string'?C(c):c);
+    const tex=(lines,bg,fg,font,w=640,h=128)=>{ const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d'); g.fillStyle=bg; g.fillRect(0,0,w,h);
+      g.strokeStyle='rgba(255,255,255,.55)'; g.lineWidth=6; g.strokeRect(5,5,w-10,h-10); g.fillStyle=fg; g.textAlign='center'; g.textBaseline='middle';
+      lines.forEach((l,i)=>{ g.font=Array.isArray(font)?font[i]:font; g.fillText(l,w/2,h*(i+0.5)/lines.length+(lines.length>1?(i?-6:6):0),w*0.92); }); return c; };
+    const sign=(z,w,h,y,cv)=>{ (window.__mtSigns=window.__mtSigns||[]).push({x:fx-0.47,y,z,ry:-Math.PI/2,w,h,cv,glow:0.55}); };
+    const H=4.3, z0=814, n=5, L=(862-814)/n, xc=(fx+bx)/2, dk=C('#2b2622');
+    const shops=[
+      {n:['PETRA CAFE'],bg:'#1f5f4f',fg:'#f6e7c1',wall:'#e7dcc6',aw:'#2e7a62',f:'bold 64px sans-serif'},
+      {n:['NEW KATHI ROLLS'],bg:'#c22a24',fg:'#ffd23f',wall:'#efe2c8',aw:'#d9452e',f:'bold 58px sans-serif'},
+      {n:['Mama Mio','MILKSHAKES & ICE CREAM'],bg:'#e05a8f',fg:'#ffffff',wall:'#f6e3ea',aw:'#e77ba3',f:['bold italic 60px sans-serif','bold 26px sans-serif']},
+      {n:['SWAAD SANGAM'],bg:'#e8862a',fg:'#ffffff',wall:'#efe0c4',aw:'#c96a1f',f:'bold 60px sans-serif'},
+      {n:['MERE PAKWAAN'],bg:'#7a2032',fg:'#ffd98a',wall:'#e9dcc4',aw:'#8f2b3d',f:'bold 60px sans-serif'}];
+    T(xc,838,bx-fx,862-814,H,0.22,'#bdb6aa');
+    shops.forEach((sp,i)=>{ const za=z0+i*L, zb=za+L, zm=(za+zb)/2;
+      T(xc,zm,bx-fx,L-0.25,0,H,sp.wall);
+      T(fx-0.05,zm,0.12,L-0.9,0.05,0.35,'#8d8579');
+      T(fx-0.04,zm,0.08,L-2.2,0.4,2.25,dk);
+      T(fx-0.09,zm,0.1,L-2.0,2.62,0.32,'#8e9399');
+      T(fx-0.55,zm,0.9,L-3.4,0,1.0,'#efe9dc'); T(fx-0.55,zm,1.0,L-3.3,1.0,0.07,'#6b4a35');
+      T(fx-0.3,zm,0.26,L-0.7,2.98,1.24,sp.bg);
+      sign(zm,L-0.9,1.08,3.6,tex(sp.n,sp.bg,sp.fg,sp.f));
+      const ya=2.92, yb=2.5, xa=fx-0.02, xo=fx-1.6, c=C(sp.aw), q0=za+0.3, q1=zb-0.3;
+      dg.tri(xa,ya,q0, xo,yb,q1, xo,yb,q0, c); dg.tri(xa,ya,q0, xa,ya,q1, xo,yb,q1, c); dg.tri(xa,ya,q0, xo,yb,q0, xo,yb,q1, c); dg.tri(xa,ya,q0, xo,yb,q1, xa,ya,q1, c);
+      for(const z of [q0+0.15,q1-0.15]) T(xo+0.1,z,0.08,0.08,0,yb,'#6f6a62');
+      if(i<n-1) T(fx-0.12,zb,0.3,0.32,0,H,'#cfc6b4'); });
+    T(fx-1.05,834.6,0.9,1.4,0,1.0,'#f4f6f8'); T(fx-1.05,834.6,0.92,1.42,1.0,0.05,'#4aa3d8');
+    T(fx-0.9,816.3,0.6,0.7,0,1.6,'#d71f2e'); T(fx-0.9,861.0,0.6,0.7,0,1.6,'#1e5fa8');
+    markOcc(xc,838,3); for(let z=816;z<=860;z+=5) markOcc(fx-5,z,4.5); }
 
   // ---- CMHW: small reception hut with its sign in front of House 503
   { const b=bInfo.find(q=>q.name==='CMHW'); if(b){ const x=b.cx-8.2, z=b.cz+2; box(dg,x,z,4.2,5,0,3,0,C('#b9c3b0')); box(dg,x-0.3,z,4.8,5.6,3,0.15,0,C('#8d8f88'));

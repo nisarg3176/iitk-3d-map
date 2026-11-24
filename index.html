@@ -313,7 +313,7 @@
 
 <div id="title" class="ui">
   <h1>IIT Kanpur <span>in 3D</span></h1>
-  <p>Made by Nisarg · OpenStreetMap data · <a id="aboutLink" role="button" tabindex="0">About</a></p>
+  <p>Made by Nisarg · <a id="aboutLink" role="button" tabindex="0">About</a></p>
 </div>
 
 <div id="searchWrap" class="ui">
@@ -605,7 +605,10 @@ function windowTextures(){
     const r=wr();
     if(r<0.42){ const warm=wr(); const l=0.55+wr()*0.45;
       ce.fillStyle = warm<0.8 ? `rgba(255,${190+wr()*30|0},${110+wr()*40|0},${l})` : `rgba(215,230,255,${l})`;
-      ce.fillRect(wx,wy,ww,wh); ce.fillStyle='rgba(0,0,0,.5)'; ce.fillRect(wx+ww/2-1,wy,2,wh); }
+      if(r<0.36){ const sh=(i*7+j*3)%5; // only some rooms are lit, and not all the same way (curtains, half-open, a lamp)
+        if(sh===0) ce.fillRect(wx,wy,ww,wh); else if(sh===1) ce.fillRect(wx,wy,ww/2-1,wh); else if(sh===2) ce.fillRect(wx,wy+wh*0.45,ww,wh*0.55);
+        else if(sh===3) ce.fillRect(wx+ww/2+1,wy,ww/2-1,wh); else { ce.globalAlpha=0.6; ce.fillRect(wx,wy,ww,wh); ce.globalAlpha=1; }
+        ce.fillStyle='rgba(0,0,0,.5)'; ce.fillRect(wx+ww/2-1,wy,2,wh); } }
   }
   const t1=new THREE.CanvasTexture(a), t2=new THREE.CanvasTexture(e);
   for(const t of [t1,t2]){ t.wrapS=t.wrapT=THREE.RepeatWrapping; t.anisotropy=renderer.capabilities.getMaxAnisotropy(); }
@@ -619,7 +622,8 @@ function glowTexture(inner='rgba(255,214,150,1)'){
 }
 
 /* ---------------- build world ---------------- */
-const data=await (await fetch('campus.json?v=20261124')).json();
+const data=await (await fetch('campus.json?v=20261127')).json();
+data.places=data.places.filter(p=>p.n!=='Wazwan Foods'&&p.n!=='Chocolate Room');
 // Counselling Service is now CMHW (Center for Mental Health and Wellbeing)
 for(const b of data.buildings||[]) if(b.n==='Counselling Service'){ b.n='CMHW'; b.fn='Center for Mental Health and Wellbeing'; b.alt=['Center for Mental Health and Wellbeing','Counselling Service','Mental health centre','Wellbeing centre']; }
 for(const r of data.info||[]) if(r.n==='Counselling Service') r.n='CMHW';
@@ -644,7 +648,38 @@ for(const b of data.buildings){
   if(b.n==='Starbucks') b.sty='sbux';
   if(/^Department of Chemical Engineering/.test(b.n||'')) b.sty='chem';
   if(b.n==='P K Kelkar Library') b.cust='library';
+  // matched to the campus tour videos
+  if(b.n==='Tutorial Block') b.sty='tb';
+  if(b.n==='DJAC') b.sty='djac';
+  if(b.n==='Rajeev Motwani Building') b.sty='rm';
+  if(b.n==='H.R. Kadim Diwan Building'){ b.sty='cse'; b.alt=['CSE Department','Computer Science Department',...(b.alt||[])]; }
+  if(b.n==='Indoor Sports Complex'){ b.sty='sac'; b.alt=['New Sports Complex','NSC','New SAC',...(b.alt||[])]; }
+  if(/^L[1-7]$/.test(b.n||'')) b.sty='lhcr';
+  if(b.n==='Faculty Building') b.sty='l20';
+  if(b.n==='Computer Centre') b.sty='cc';
+  if(b.n==='NCL') b.sty='djac';
+  if(b.n==='ESB3'||b.n==='Engineering Science Building 2') b.sty='esb';
+  if(b.n==='Engineering Science Building 2') b.alt=['ESB2','ESB 2','ESB-2',...(b.alt||[])];
+  if(['Dept Of BSBE, IITK','ACMS','ACES','Western Labs','Western Lab Extension'].includes(b.n)) b.sty='hallB';
+  if(b.n==='Cafe Coffee Day') b.cust='ccd';
+  if(!b.n&&b.x4&&b.t==='retail'){ const r=b.r[0]; let x=0,z=0; for(let i=0;i<r.length;i+=2){x+=r[i];z+=r[i+1];} x/=r.length/2; z/=r.length/2; if(Math.hypot(x+434,z-130)<3) b.cust='mt'; }
+  if(!b.n||b.n==='Old Sports Complex Gym'){ const r=b.r[0]; let x=0,z=0; for(let i=0;i<r.length;i+=2){x+=r[i];z+=r[i+1];} x/=r.length/2; z/=r.length/2;
+    if(!b.n&&Math.hypot(x+524,z-951)<6) b.sty='sac';                                   // the SAC block behind the OAT stage
+    if(!b.sty&&!/dormitory/.test(b.t||'')&&Math.hypot(x+321,z-558)<60) b.sty='hall3'; }   // old sports complex: Hall 3 colours
+  if(b.n==='SBI') b.sty='sbi';
+  if(/^L1[0-5]$/.test(b.n||'')) b.cust='lhc';
+  if(b.n==='Wind Tunnel Facility'){ b.cust='wt'; b.alt=['National Wind Tunnel Facility','NWTF',...(b.alt||[])]; }
+  if(b.n==='Computer Center Canteen'){ b.cust='cck'; b.alt=['CC Canteen',...(b.alt||[])]; }
 }
+// hall blocks get their hall's look (blocks named after another hall are left alone)
+{ const HS={'Hall 1':'hall1','Hall 3':'hall3','Hall 10':'hall10','Hall 11':'hall10'};
+  for(const p of data.places){ const st=HS[p.n]; if(!st) continue; const Rr=Math.sqrt((p.a||8000)/Math.PI);
+    for(const b of data.buildings){ if(b.sty||b.cust) continue; const own=(b.n||'').startsWith(p.n+' ');
+      if(b.n&&!own) continue; if(!own&&!/dormitory/.test(b.t||'')) continue; if(own&&!/block/i.test(b.n)) continue;
+      const r=b.r[0]; let x=0,z=0; for(let i=0;i<r.length;i+=2){x+=r[i];z+=r[i+1];} x/=r.length/2; z/=r.length/2;
+      if(own||Math.hypot(x-p.x,z-p.z)<Rr){ b.sty=st; b.hall=p.n; } } }
+  for(const b of data.buildings){ if(b.sty||b.cust) continue; const r=b.r[0]; let x=0,z=0; for(let i=0;i<r.length;i+=2){x+=r[i];z+=r[i+1];} x/=r.length/2; z/=r.length/2;
+    if(b.n==='Hall 1 Mess'||(!b.n&&Math.hypot(x+313,z-431)<8)) b.sty='hall1m'; } }
 lmsg.textContent='Raising the buildings…'; await tick();
 
 const EXT=1500; // half-extent of the modelled area
@@ -862,8 +897,23 @@ const bInfo=[];
 // facade styles matched to photos (wall colour + frame/band details added later)
 const STY={
   h13:{wall:'#9f4934',frame:'#e8b394',bay:4.3,pergola:1},
-  vh:{wall:'#eee4c8',frame:'#9ba7b5',stripe:'#cf6a40',bay:4.6},
-  oldshop:{wall:'#e8d8bb',frame:'#b4583c',awn:'#c9683f'},
+  vh:{wall:'#e4e4e1',frame:'#b9bec4',stripe:'#cfd2d6',bay:4.6},
+  hallB:{wall:'#ddd0b5',frame:'#e9dec8',bay:6},
+  lhcr:{wall:'#a4503b',frame:'#cbc5b8',bay:5},
+  cc:{wall:'#a9533e',frame:'#dcd7cd',bay:6},
+  esb:{wall:'#a3a5a4',frame:'#c6c8c7',bay:5},
+  sac:{wall:'#d6b68a',frame:'#c49d6c',bay:6},
+  oldshop:{wall:'#d9785c',frame:'#f1e6d4',awn:'#c9683f'},
+  hall1:{wall:'#a34d39',frame:'#eeebe4',bay:3.6},
+  hall3:{wall:'#e9ebe8',frame:'#f5f3ee',bay:4.2},
+  hall1m:{wall:'#a34d39',frame:'#eeebe4',bay:4},
+  hall10:{wall:'#ddd0b5',frame:'#e9dec8',bay:4.6},
+  tb:{wall:'#a4503b',frame:'#cbc5b8',bay:5},
+  djac:{wall:'#a94c3a'},
+  rm:{wall:'#a9533e'},
+  cse:{wall:'#a9523d',frame:'#d6cfc2',bay:4.4},
+  nsc:{wall:'#ecebe6',frame:'#bcb9b1',bay:6},
+  sbi:{wall:'#a9433a',band:'#1f5aa8'},
   shop:{wall:'#ead6b0',awn:'#d0553c'},
   assoc:{wall:'#e6d9c2',frame:'#b4583c',bay:5},
   fire:{wall:'#efebe3',band:'#c8372d',doors:'#b42f27'},
@@ -915,7 +965,7 @@ for(const b of data.buildings){
       u=u1;
     }
   }
-  const rc = wc.clone().multiplyScalar(0.86).lerp(C('#9d9b96'),0.25);
+  const rc = st ? C('#aaa69e').lerp(wc,0.12) : wc.clone().multiplyScalar(0.86).lerp(C('#9d9b96'),0.25);
   let didHip=false;
   if((t==='house' || (t==='residential' && area<220) || /gabled|hipped|pyramidal/.test(b.rs||'')) && rings.length===1){ didHip=hipRoof(outer,H,C(ROOFRED[(R()*ROOFRED.length)|0])); }
   if(!didHip){
@@ -1080,6 +1130,8 @@ function nearestRoad(x,z,maxD=30){ let best=null,bd=maxD;
     const t=Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/L)); const d=Math.hypot(x-a[0]-t*dx,z-a[1]-t*dz);
     if(d<bd){ bd=d; best={ang:Math.atan2(dz,dx),w:v.w,d,px:a[0]+t*dx,pz:a[1]+t*dz}; } }
   return best; }
+function wayAt(x,z){ let best=null,bd=1e9; for(const r of data.roads){ const p=r.p; for(let i=0;i+3<p.length;i+=2){ const ax=p[i],az=p[i+1],bx=p[i+2],bz=p[i+3]; if(Math.abs(ax-x)>250&&Math.abs(bx-x)>250) continue;
+  const dx=bx-ax,dz=bz-az,L=dx*dx+dz*dz; if(!L) continue; const t=Math.max(0,Math.min(1,((x-ax)*dx+(z-az)*dz)/L)); const d=Math.hypot(x-ax-t*dx,z-az-t*dz), Ls=Math.sqrt(L); if(d<bd-0.3||(d<bd+0.3&&best&&Ls>best.L)){ bd=Math.min(d,bd); best={ang:Math.atan2(dz,dx),w:(ROAD[r.t]?ROAD[r.t][0]:4),d,t:r.t,L:Ls}; } } } return best; }   // at a bend, follow the longer segment
 const stdMat=(c,o={})=>new THREE.MeshLambertMaterial({color:c,flatShading:true,...o});
 function addMesh(geo,mat,x,y,z,ry=0){ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.rotation.y=ry; m.castShadow=true; m.receiveShadow=true; scene.add(m); return m; }
 const DL=data.dlines||[], DP=data.dpts||[];
@@ -1102,14 +1154,14 @@ const DL=data.dlines||[], DP=data.dpts||[];
 }
 // ---- raised academic-area walkways & covered corridors
 {
-  const deck=C('#d8d2c7'), roof=C('#a95a3e'), post=C('#bdb6aa');
+  const deck=C('#aaa59b'), roof=C('#9e9a91'), post=C('#8f8b83'); // raw grey concrete, as on campus
   const items=[];
   for(const r of data.roads) if(r.lv && r.b) items.push({pts:toPts(r.p),y:Math.max(1,r.lv)*4.2});
   const insideB=(x,z)=>bInfo.some(b=>Math.abs(b.cx-x)<150&&Math.abs(b.cz-z)<150&&pip(x,z,b.outer));
   for(const l of DL) if(l.t==='corridor'){ const pts=toPts(l.p); let n=0,inn=0; walk(pts,3,0,(x,z)=>{ n++; if(insideB(x,z)) inn++; }); if(n && inn/n>0.4) continue; items.push({pts,y:(l.lv||0)*4.2}); }
   for(const it of items){ const {pts,y}=it; if(pts.length<2) continue;
     if(y>0) solidRibbon(dg,pts,3.0,y-0.4,y,deck,true,true);
-    solidRibbon(dg,pts,4.0,y+3.0,y+3.3,roof,true,true);
+    solidRibbon(dg,pts,4.0,y+2.6,y+3.3,roof,true,true); if(y>0) for(const s of [-1.45,1.45]){ const [L]=offsets(pts,s); solidRibbon(dg,L,0.18,y,y+1.0,deck); }
     walk(pts,7,1.5,(x,z,dx,dz)=>{ for(const s of [-1.35,1.35]) box(dg,x-dz*s,z+dx*s,0.3,0.3,0,y+3,Math.atan2(dz,dx),post); });
   }
 }
@@ -1174,13 +1226,25 @@ for(const d of DP){
     box(dg,x,z,4.6,2.0,2.6,0.18,ang,c); box(dg,x-Math.cos(ang+Math.PI/2)*0.9,z-Math.sin(ang+Math.PI/2)*0.9,4.4,0.1,0,2.6,ang,C('#bfd5df'));
     for(const s of [-2.1,2.1]) box(dg,x+Math.cos(ang)*s,z+Math.sin(ang)*s,0.15,0.15,0,2.6,ang,c);
     poiIcons.push({t:'bus',x,z}); }
-  else if(d.t==='gate'||d.t==='lift_gate'){ const nr=nearestRoad(x,z,25); const ang=nr?nr.ang:0, w=nr?nr.w+2.6:6;
+  else if(d.t==='gate'||d.t==='lift_gate'){ const wy=d.t==='gate'?wayAt(x,z):null; const nr=wy&&wy.d<6?{ang:wy.ang,w:Math.max(3,wy.w)}:nearestRoad(x,z,25); const ang=nr?nr.ang:0, w=nr?nr.w+2.6:6;
     const cx=Math.cos(ang+Math.PI/2), cz=Math.sin(ang+Math.PI/2);
-    if(d.t==='gate'){ const pc=C('#d9cdb4'); for(const s of [-1,1]) box(dg,x+cx*s*(w/2+0.6),z+cz*s*(w/2+0.6),1.1,1.1,0,d.n?4.6:2.6,ang,pc);
+    if(d.t==='gate'&&d.n&&/Academic Area Gate/.test(d.n)){ // red-brick pillars, open iron gates and a small tiled guard room
+      const br=C('#a24e39'), cap=C('#ddd6c8'), iron=C('#26292d');
+      for(const s of [-1,1]){ const px=x+cx*s*(w/2+0.7), pz=z+cz*s*(w/2+0.7); box(dg,px,pz,1.3,1.3,0,3.0,ang,br); box(dg,px,pz,1.6,1.6,3.0,0.3,ang,cap); box(dg,px,pz,0.5,0.5,3.3,0.35,ang,cap);
+        const L=w/2*0.95, c0=Math.cos(ang), s0=Math.sin(ang); // leaf swung open, lying along the kerb
+        for(const yy of [0.2,1.1,2.0]) box(dg,px+c0*(L/2+0.7),pz+s0*(L/2+0.7),L,0.07,yy,0.09,ang,iron);
+        for(let k=0;k<=Math.round(L/0.35);k++){ const t=0.7+k*0.35; box(dg,px+c0*t,pz+s0*t,0.05,0.05,0.1,2.05,ang,iron); } }
+      let sd=0; for(const s of [1,-1]){ const gx=x+cx*s*(w/2+3.4), gz=z+cz*s*(w/2+3.4); if(!roadAt(gx,gz)&&!roadAt(gx+cx*s*1.4,gz+cz*s*1.4)&&!bInfo.some(b=>Math.abs(b.cx-gx)<90&&Math.abs(b.cz-gz)<90&&pip(gx,gz,b.outer))){ sd=s; break; } }
+      if(sd){ const gx=x+cx*sd*(w/2+3.4), gz=z+cz*sd*(w/2+3.4); box(dg,gx,gz,2.6,2.6,0,2.6,ang,br); box(dg,gx-cx*sd*1.31,gz-cz*sd*1.31,1.2,0.06,1.1,0.9,ang,C('#2b3640'));
+        box(dg,gx,gz,3.0,3.0,2.6,0.2,ang,C('#cfc8bb')); box(dg,gx,gz,2.2,2.2,2.8,0.45,ang,C('#b4553a')); markOcc(gx,gz,2.5); } }
+    else if(d.t==='gate'){ const pc=C('#d9cdb4'); for(const s of [-1,1]) box(dg,x+cx*s*(w/2+0.6),z+cz*s*(w/2+0.6),1.1,1.1,0,d.n?4.6:2.6,ang,pc);
       if(d.n){ box(dg,x,z,1.0,w+2.4,4.6,1.0,ang,pc); } }
     else { box(dg,x+cx*(-w/2-0.5),z+cz*(-w/2-0.5),0.45,0.45,0,1.2,ang,C('#3b4048'));
       const n=Math.max(2,Math.round(w)); for(let i=0;i<n;i++){ const t=-w/2+(i+0.5)*w/n; box(dg,x+cx*t,z+cz*t,0.14,w/n,1.0,0.14,ang,i%2?C('#f1efe9'):C('#d0372b')); }
-      const gx=x+cx*(-w/2-2.6), gz=z+cz*(-w/2-2.6); box(dg,gx,gz,2.2,2.2,0,2.6,ang,C('#e8e0d0')); box(dg,gx,gz,2.8,2.8,2.6,0.25,ang,C('#a95a3e')); } }
+      if(x>900&&Math.abs(z-297)<40){ const gx=x+cx*(-w/2-3.0), gz=z+cz*(-w/2-3.0); box(dg,gx,gz,3.6,3.6,0,0.5,ang,C('#d9d4ca')); box(dg,gx,gz,3.4,3.4,0.5,2.5,ang,C('#7f93a6'));
+        for(const [ox,oz] of [[1.72,0],[-1.72,0],[0,1.72],[0,-1.72]]) box(dg,gx+Math.cos(ang)*ox-Math.sin(ang)*oz,gz+Math.sin(ang)*ox+Math.cos(ang)*oz,oz?2.2:0.08,oz?0.08:2.2,1.25,1.25,ang,C('#2b3640'));
+        box(dg,gx,gz,3.9,3.9,3.0,0.18,ang,C('#e9e6df')); box(dg,gx,gz,3.9,3.9,3.18,0.42,ang,C('#2f8f6b')); markOcc(gx,gz,2.5); }
+      else { const gx=x+cx*(-w/2-2.6), gz=z+cz*(-w/2-2.6); box(dg,gx,gz,2.2,2.2,0,2.6,ang,C('#e8e0d0')); box(dg,gx,gz,2.8,2.8,2.6,0.25,ang,C('#a95a3e')); } } }
   else if(['toilets','water','bike','ev','post','atm','hydrant'].includes(d.t)) poiIcons.push({t:d.t,x,z});
 }
 
@@ -1223,7 +1287,7 @@ for(const d of DP){
 
   // ---- "Crow": the angular grey sculpture in front of the library
   { const IF=data.info||[]; const sj=IF.find(r=>/silver jubilee/i.test(r.n))||{x:-123.6,z:195.2}; const x=sj.x, z=sj.z, g=C('#6b7076'), g2=C('#4c5056');
-    disc(dg,x,z,3.4,0.5,C('#dcd8cf'),24);
+    { const dm=addMesh(new THREE.SphereGeometry(3.4,18,6,0,Math.PI*2,0,Math.PI/2),stdMat(0xe4e1da),x,0,z); dm.scale.y=0.2; }
     const K=1.35, T=(a,b,c,col)=>dg.tri(x+a[0]*K,a[1]*K,z+a[2]*K,x+b[0]*K,b[1]*K,z+b[2]*K,x+c[0]*K,c[1]*K,z+c[2]*K,col);
     const P={f1:[-1.6,0.5,0.8],f2:[1.4,0.5,-0.6],k:[0,4.2,0],h:[1.5,7.6,0.6],b:[-0.4,6.1,-1.4],w:[-2.6,5.6,1.6],t:[0.3,3,1.9]};
     T(P.f1,P.k,P.t,g); T(P.f2,P.k,P.t,g2); T(P.f1,P.f2,P.k,g); T(P.k,P.h,P.b,g2); T(P.k,P.h,P.w,g); T(P.k,P.b,P.w,g2); T(P.h,P.b,P.w,g); T(P.k,P.t,P.h,g2);
@@ -1231,14 +1295,10 @@ for(const d of DP){
 
   // ---- Open Air Theatre: stepped semicircle facing the SAC stage, plus the glass tower
   { const cx=-532, cz=940, seat=C('#cfcac0'), seat2=C('#bdb7aa');
-    for(let k=0;k<9;k++){ const r0=5+k*1.9, r1=r0+1.9, y=0.15+k*0.45;
-      for(let s=0;s<20;s++){ const a0=Math.PI+s/20*Math.PI, a1=Math.PI+(s+1)/20*Math.PI;
-        const A=[cx+Math.cos(a0)*r0,cz+Math.sin(a0)*r0],B=[cx+Math.cos(a1)*r0,cz+Math.sin(a1)*r0],Cq=[cx+Math.cos(a1)*r1,cz+Math.sin(a1)*r1],D=[cx+Math.cos(a0)*r1,cz+Math.sin(a0)*r1];
-        dg.flat(A[0],A[1],B[0],B[1],Cq[0],Cq[1],y,k%2?seat:seat2); dg.flat(A[0],A[1],Cq[0],Cq[1],D[0],D[1],y,k%2?seat:seat2); quad(dg,B,A,y-0.45,y,seat2); } }
-    disc(dg,cx,cz,5,0.12,C('#a9a196'),24);
+    disc(dg,cx,cz,6,0.12,C('#a9a196'),24);
     // murals on the outer ring
     const mur=['#2f74c0','#e0b33a','#c8453a','#3f9b6a'];
-    for(let s=0;s<14;s++){ const a=Math.PI+(s+0.5)/14*Math.PI; box(dg,cx+Math.cos(a)*5.05,cz+Math.sin(a)*5.05,2.2,0.12,0.12,0.5,a+Math.PI/2,C(mur[s%4])); }
+    for(let s=0;s<16;s++){ const a=Math.PI+(s+0.5)/16*Math.PI; box(dg,cx+Math.cos(a)*6.05,cz+Math.sin(a)*6.05,2.2,0.12,0.12,0.5,a+Math.PI/2,C(mur[s%4])); }
     box(dg,cx,cz+1.8,16,0.5,0.15,7,0,white); box(dg,cx,cz+1.4,17,2.6,0,1.1,0,C('#d6cfc2'));
     markOcc(cx,cz-10,22);
     // glass lift tower
@@ -1262,7 +1322,7 @@ for(const d of DP){
     labels.push({name:'Pronite Stage',x,z:z+4,y:8,rank:4,tier:3,cat:'civic',alt:['Pronite','Antaragni stage','Fest stage'],size:10}); }
 
   // ---- Cessna VT-DUM on display near the Flight Lab
-  { const x=-300, z=-662, ang=0.35, K=1.6, wh=C('#f3f1ec'), tri=[C('#e0802f'),C('#f3f1ec'),C('#2f8a3a')];
+  { const x=-186, z=-602, ang=0.35, K=1.6, wh=C('#f3f1ec'), tri=[C('#e0802f'),C('#f3f1ec'),C('#2f8a3a')];
     disc(dg,x,z,12.5,0.14,C('#7cbc52'),32);
     for(let i=0;i<30;i++){ const a=i/30*Math.PI*2; box(dg,x+Math.cos(a)*11.8,z+Math.sin(a)*11.8,0.25,0.25,0,1.1,0,tri[i%3]); }
     const P=(u,v)=>[x+Math.cos(ang)*u*K-Math.sin(ang)*v*K, z+Math.sin(ang)*u*K+Math.cos(ang)*v*K];
@@ -1280,25 +1340,7 @@ for(const d of DP){
     markOcc(x,z,13);
     labels.push({name:'Cessna VT-DUM',x,z,y:7,rank:5,tier:3,cat:'civic',alt:['Plane','Aircraft at airstrip','Aeroplane'],size:12}); }
 
-  // ---- main entrance: SIS security huts and the IIT Kanpur signs
-  { const hut=(x,z)=>{ box(dg,x,z,3.2,3.2,0,2.7,0,C('#eeeae0')); box(dg,x,z,3.4,3.4,2.7,0.2,0,C('#b4553a'));
-      const r=addMesh(new THREE.ConeGeometry(2.7,1.4,4),stdMat(0xb4553a),x,3.6,z,Math.PI/4); box(dg,x+1.62,z,0.1,1.2,1.2,0.9,0,C('#5d7f99')); };
-    hut(1088,284.5); hut(1088,309.5);
-    labels.push({name:'Main Gate (SIS)',x:1092,z:297,y:6,rank:12,tier:2,cat:'civic',alt:['Main Gate','IIT Gate','Entrance','SIS hut','Security'],size:12});
-    // red A-frame sign with the Hindi name, facing visitors coming in from the east
-    const sx=1101, sz=280.5, red=C('#b4583c');
-    box(dg,sx,sz,0.5,11,3.2,2.2,0,red);
-    for(const s of [-4.2,4.2]){ box(dg,sx-0.6,sz+s,0.5,0.5,0,4.4,0,red); box(dg,sx+0.8,sz+s,0.5,0.5,0,3.4,0,red); }
-    const mk=(txt,bg,fg,w,h,font)=>{ const c=document.createElement('canvas'); c.width=512; c.height=Math.round(512*h/w); const x=c.getContext('2d'); x.fillStyle=bg; x.fillRect(0,0,c.width,c.height);
-      x.fillStyle=fg; x.font=font; x.textAlign='center'; x.textBaseline='middle'; const L=txt.split('\n'); L.forEach((t,i)=>x.fillText(t,c.width/2,c.height*(i+0.5)/L.length)); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t; };
-    const p1=new THREE.Mesh(new THREE.PlaneGeometry(10.6,2.0),new THREE.MeshLambertMaterial({map:mk('आईआईटी कानपुर','#b4583c','#f3efe6',10.6,2,'bold 64px sans-serif')}));
-    p1.position.set(sx+0.27,4.3,sz); p1.rotation.y=Math.PI/2; scene.add(p1);
-    const bx=1107, bz=271;
-    for(const s of [-3.6,3.6]) box(dg,bx,bz+s,0.3,0.3,0,6,0,C('#9aa0a6'));
-    box(dg,bx,bz,0.25,8.4,4,2.4,0,C('#2463b0'));
-    const p2=new THREE.Mesh(new THREE.PlaneGeometry(8.2,2.2),new THREE.MeshLambertMaterial({map:mk('भारतीय प्रौद्योगिकी संस्थान, कानपुर\nINDIAN INSTITUTE OF TECHNOLOGY KANPUR','#2463b0','#ffffff',8.2,2.2,'bold 26px sans-serif')}));
-    p2.position.set(bx+0.14,5.2,bz); p2.rotation.y=Math.PI/2; scene.add(p2);
-    markOcc(sx,sz,6); markOcc(bx,bz,5); }
+
 
   // ---- Mama Mio chowpatty: tin shed with benches in front of the shops
   { const x0=-736.5, x1=-729.5, z0=816, z1=862, post=C('#c9a24a');
@@ -1306,12 +1348,6 @@ for(const d of DP){
     for(let z=z0;z<=z1;z+=6.5) for(const x of [x0,x1]) box(dg,x,z,0.25,0.25,0,3.3,0,post);
     for(let z=z0+3;z<z1-2;z+=5.5){ box(dg,(x0+x1)/2,z,3.6,1.1,0.75,0.12,0,C('#8a5a3a')); for(const s of [-1,1]) box(dg,(x0+x1)/2,z+s*1.2,3.6,0.35,0.42,0.1,0,C('#8a5a3a')); }
     markOcc((x0+x1)/2,(z0+z1)/2,10); }
-
-  // ---- LHC Mandir: small shrine with a blue curved canopy
-  { const x=-179, z=270; box(dg,x,z,5,4.2,0,0.4,0,C('#d9d2c4')); for(const [ox,oz] of [[-2.2,-1.8],[2.2,-1.8],[2.2,1.8],[-2.2,1.8]]) box(dg,x+ox,z+oz,0.25,0.25,0.4,2.4,0,C('#c8453a'));
-    box(dg,x,z+1.6,2.4,0.8,0.4,2,0,C('#e8e6e0'));
-    const c=addMesh(new THREE.CylinderGeometry(2.3,2.3,4.6,14,1,true,-Math.PI/2,Math.PI),new THREE.MeshLambertMaterial({color:0x3aa6c9,side:THREE.DoubleSide}),x,2.8,z); c.rotation.set(0,0,Math.PI/2); c.scale.set(1,1,0.75);
-    markOcc(x,z,3); }
 
   // ---- CMHW: small reception hut with its sign in front of House 503
   { const b=bInfo.find(q=>q.name==='CMHW'); if(b){ const x=b.cx-8.2, z=b.cz+2; box(dg,x,z,4.2,5,0,3,0,C('#b9c3b0')); box(dg,x-0.3,z,4.8,5.6,3,0.15,0,C('#8d8f88'));
@@ -1341,15 +1377,455 @@ for(const d of DP){
     for(const [x,z,c] of aw){ box(dg,x-7.2,z,1.8,9,2.8,0.18,0,c); }
   }
 
-  // ---- MT Market: tea-stall shed with benches on the paved square
-  { const x0=-428, x1=-410, z0=122, z1=136;
-    box(dg,(x0+x1)/2,(z0+z1)/2,x1-x0+1,z1-z0+1,3.2,0.16,0,C('#3f7fa8'));
-    for(const x of [x0,(x0+x1)/2,x1]) for(const z of [z0,z1]) box(dg,x,z,0.22,0.22,0,3.2,0,C('#c9a24a'));
-    for(let z=z0+2.5;z<z1-1;z+=4){ box(dg,-419,z,7,0.9,0.7,0.1,0,C('#8a5a3a')); box(dg,-419,z+1,7,0.35,0.42,0.08,0,C('#8a5a3a')); box(dg,-419,z-1,7,0.35,0.42,0.08,0,C('#8a5a3a')); }
-    box(dg,-432,129,1.4,22,0,1.0,0,C('#b4553a')); }
+  // ---- MT Market (from the photos): a row of small shops facing the road to the east across a paved forecourt —
+  //      ANEXA (white), a general store, Vinod Garments & Footwear (orange Sparx board), the Hanuman temple (green canopy),
+  //      and the big tea / snack stall under a tarp roof with drink fridges; a tall steel shed rises behind them; railings, cage bins and a 4-arm lamp in front
+  { const fx=-416, T=(x,z,w,d,y,h,c)=>box(dg,x,z,w,d,y,h,0,C(c));
+    const tex2=(lines,bg,fg,font,w=512,h=128)=>{ const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d'); g.fillStyle=bg; g.fillRect(0,0,w,h); g.fillStyle=fg; g.textAlign='center'; g.textBaseline='middle'; lines.forEach((l,i)=>{ g.font=Array.isArray(font)?font[i]:font; g.fillText(l,w/2,h*(i+0.5)/lines.length,w*0.94); }); return c; };
+    const sign=(x,y,z,w,h,cv,glow=0.4)=>{ (window.__mtSigns=window.__mtSigns||[]).push({x,y,z,ry:Math.PI/2,w,h,cv,glow}); };
+    // steel shed behind (tall, gabled, dark corrugated roof on columns, beige wall under it)
+    const sx0=-437, sx1=-421, sz0=116, sz1=142, eave=5.6, ridge=7.4, steel=C('#4a4d51'), sheet=C('#5b5f63');
+    T((sx0+sx1)/2,(sz0+sz1)/2,sx1-sx0,sz1-sz0,0,3.4,'#d8cdb6');
+    for(const x of [sx0,sx1]) for(let z=sz0;z<=sz1+0.01;z+=6.5) box(dg,x,z,0.25,0.25,3.4,eave-3.4,0,steel);
+    const xm=(sx0+sx1)/2; for(const s of [-1,1]){ const x0=s<0?sx0-0.6:sx1+0.6; { const z0=sz0-0.4, z1=sz1+0.4;
+        dg.tri(x0,eave,z0, xm,ridge,z1, xm,ridge,z0, sheet); dg.tri(x0,eave,z0, x0,eave,z1, xm,ridge,z1, sheet);
+        dg.tri(x0,eave,z0, xm,ridge,z0, xm,ridge,z1, sheet); dg.tri(x0,eave,z0, xm,ridge,z1, x0,eave,z1, sheet); } }
+    for(let z=sz0;z<=sz1+0.01;z+=6.5){ dg.tri(sx0,eave,z, xm,ridge,z, sx1,eave,z, steel); box(dg,xm,z,sx1-sx0,0.15,eave-0.15,0.15,0,steel); }
+    // shop row (front face at x=fx, facing east)
+    const roofT=(z0,z1,col,h=3.0,out=2.2)=>{ const x0=fx-4.6, x1=fx+out; dg.tri(x0,h+0.5,z0, x1,h-0.2,z1, x1,h-0.2,z0, C(col)); dg.tri(x0,h+0.5,z0, x0,h+0.5,z1, x1,h-0.2,z1, C(col));
+      dg.tri(x0,h+0.5,z0, x1,h-0.2,z0, x1,h-0.2,z1, C(col)); dg.tri(x0,h+0.5,z0, x1,h-0.2,z1, x0,h+0.5,z1, C(col)); };
+    // ANEXA: small white building at the north end
+    T(fx-2.5,119.2,6,4.4,0,3.2,'#eeece6'); T(fx-2.5,119.2,6.3,4.7,3.2,0.2,'#d7d3ca'); T(fx+0.03,119.2,0.06,1.2,0,2.2,'#5e6670');
+    T(fx+1.2,117.4,0.15,0.15,0,4.6,'#7a7f86'); sign(fx+1.29,4.1,117.4,1.6,1.1,tex2(['ANEXA'],'#f4f6f2','#1f6b4f','bold 70px sans-serif',256,170),0.2);
+    // general store
+    T(fx-2.3,123,4.6,3.2,0,2.9,'#c9c2b4'); T(fx+0.02,123,0.05,2.8,0.1,2.4,'#3a2c22');
+    for(let k=0;k<4;k++) T(fx+0.06,123-1.1+k*0.73,0.06,0.6,0.6+(k%2)*0.5,1.2,['#e2a72e','#3f8ac9','#d9452e','#4fa34a'][k]);
+    T(fx+0.5,123,0.9,2.4,0,0.8,'#7a5a3c'); roofT(121.4,124.6,'#6b6f68',2.9,1.6);
+    // Vinod Garments & Footwear: red grille front with the orange Sparx board on two posts
+    T(fx-2.3,126.5,4.6,3.6,0,2.9,'#b3332b'); for(let k=0;k<8;k++) T(fx+0.04,124.9+k*0.45,0.05,0.05,0.3,2.3,'#7a1f1a');
+    for(const z of [124.9,128.1]) T(fx+1.4,z,0.12,0.12,0,4.4,'#5d5a56'); sign(fx+1.47,3.9,126.5,3.4,1.15,tex2(['sparx','VINOD GARMENTS & FOOTWEAR'],'#e8922e','#ffffff',['bold italic 76px sans-serif','bold 30px sans-serif'],512,170),0.5);
+    roofT(124.7,128.3,'#5f675e',2.9,1.2);
+    // Sankat Mochan Hanuman temple: small red shrine under a green curved canopy, saffron flag
+    T(fx-1.4,130,2.8,2.6,0,2.3,'#c8322b'); T(fx+0.03,130,0.05,1.3,0,1.8,'#f2c14e');
+    box(dg,fx+0.2,130,1.2,3.2,2.75,0.15,0,C('#1f8a5a')); box(dg,fx+1.05,130,0.7,3.2,2.35,0.12,0,C('#1f8a5a')); box(dg,fx+1.4,130,0.12,3.2,1.95,0.45,0,C('#25a06a'));
+    T(fx-1.4,130,0.08,0.08,2.3,2.6,'#6b4a35'); T(fx-1.1,130,0.6,0.05,4.4,0.45,'#f08a24');
+    sign(fx+1.05,3.35,130,2.8,0.42,tex2(['श्री संकट मोचन हनुमान मंदिर'],'#c8322b','#fff4c8','bold 40px sans-serif',512,76),0.5);
+    // tea / snack stall: open counter, red Coca-Cola fridges, purple Campa fridge, tarp over a corrugated roof
+    T(fx-2.4,136,4.8,8.6,0,2.8,'#5a3a2a'); T(fx+0.4,136.2,0.8,6.5,0,1.0,'#d9452e'); T(fx+0.4,136.2,0.9,6.6,1.0,0.06,'#e9e3d6');
+    for(const [z,c] of [[132.4,'#d71f2e'],[133.3,'#d71f2e'],[139.6,'#6a2c8f'],[140.4,'#e3e7ea']]) T(fx+0.9,z,0.7,0.8,0,2.0,c);
+    roofT(131.6,140.9,'#4e5a4c',3.0,2.6); roofT(131.0,141.6,'#58605a',3.25,3.4);
+    // forecourt: low pipe railing with cage dustbins along the road edge, plastic chairs, the 4-arm street light
+    const rx=-404.5; for(const z of [120,126.5,133,139.5]){ T(rx,z,1.1,1.1,0,1.4,'#6b4f37'); T(rx,z,0.9,0.9,0.05,0.9,'#2f5fa8'); }
+    for(const [z0,z1] of [[120.6,125.9],[127.1,132.4],[133.6,138.9]]){ T(rx,(z0+z1)/2,0.06,z1-z0,0.85,0.06,'#7c7a76'); for(const z of [z0+0.2,z1-0.2]) T(rx,z,0.06,0.06,0,0.88,'#7c7a76'); }
+    for(const [x,z] of [[-411,133],[-410,129.5],[-412,136.5]]){ T(x,z,0.8,0.8,0.7,0.06,'#2b2b2b'); T(x+0.8,z,0.5,0.5,0,0.45,'#2b2b2b'); T(x-0.8,z,0.5,0.5,0,0.45,'#2b2b2b'); }
+    T(-405.5,116.2,0.8,0.8,0,1.0,'#9a948a'); T(-405.5,116.2,0.22,0.22,1.0,9.5,'#7a4a32');
+    for(let k=0;k<4;k++){ const a=k*Math.PI/2+Math.PI/4; box(dg,-405.5+Math.cos(a)*0.7,116.2+Math.sin(a)*0.7,1.5,0.08,10.0+(k%2)*0.4,0.08,a,C('#cfd2d4')); }
+    markOcc(-412,129,9); }
   // ---- IME foyer skylight domes
   { const b=bInfo.find(q=>/^Industrial & Management/.test(q.name||'')); if(b){ const dm=new THREE.MeshStandardMaterial({color:0xbfd9e2,roughness:0.25,metalness:0.3});
       for(const [ox,oz] of [[-5,0],[5,0]]){ const d=addMesh(new THREE.SphereGeometry(3.4,16,8,0,Math.PI*2,0,Math.PI/2),dm,b.cx+ox,b.H-0.6,b.cz+oz); d.castShadow=false; } } }
+
+  // ================= detailed models matched to the campus tour videos =================
+  {
+    const paneL=new Geo(), paneD=new Geo();               // window glass: some light up at night, some stay dark
+    const GLs=C('#4f6c80'), GLb=C('#7fa3b3');
+    const edges=(outer)=>{ const out=[]; for(let i=0;i<outer.length;i++){ const a=outer[i],b=outer[(i+1)%outer.length]; const dx=b[0]-a[0],dz=b[1]-a[1],L=Math.hypot(dx,dz); if(L<1.2) continue;
+        const ux=dx/L,uz=dz/L; let nx=uz,nz=-ux; const mx=(a[0]+b[0])/2,mz=(a[1]+b[1])/2; if(pip(mx+nx*0.5,mz+nz*0.5,outer)){ nx=-nx; nz=-nz; }
+        out.push({a,b,L,ux,uz,nx,nz,mx,mz,ang:Math.atan2(dz,dx),at:(t,o)=>[a[0]+ux*t+nx*o,a[1]+uz*t+nz*o]}); } return out; };
+    const BN=re=>bInfo.find(b=>b.name&&re.test(b.name)); const DBG=window.__dbg={}; const mark=(k,e,t,o)=>{ const [x,z]=e.at(t,o); DBG[k]=[Math.round(x),Math.round(z),Math.round(e.nx*100)/100,Math.round(e.nz*100)/100]; };
+    const frontEdge=(outer,minL=6)=>{ const es=edges(outer); let best=null,bd=1e9; for(const e of es){ if(e.L<minL) continue; const [x,z]=e.at(e.L/2,4); const r=nearestRoad(x,z,90); const d=r?r.d:500-e.L; if(d<bd){ bd=d; best=e; } } return best||es.sort((p,q)=>q.L-p.L)[0]; };
+    const cl=(e,t0,t1,y0,y1,col,o=0.07)=>quad(dg,e.at(t0,o),e.at(t1,o),y0,y1,col);                  // paint / clad part of a wall
+    const pane=(e,t0,t1,y0,y1,o=0.09,col=GLs)=>{ const p=e.at(t0,o),q=e.at(t1,o); quad(hash2(Math.round(p[0]*3+y0*7),Math.round(p[1]*3))<0.38?paneL:paneD,p,q,y0,y1,col); };
+    const bx=(e,t,o,w,d,y,h,col)=>{ const [x,z]=e.at(t,o); box(dg,x,z,w,d,y,h,e.ang,col); };
+    const band=(e,y,h,o,d,col,ext=0)=>bx(e,e.L/2,o,e.L+ext,d,y,h,col);
+    const cols=(e,y0,y1,step,o,sz,col)=>{ const n=Math.max(1,Math.round(e.L/step)); for(let k=0;k<=n;k++) bx(e,e.L*k/n,o,sz,sz,y0,y1-y0,col); };
+    const q3=(a,b,c,d,col)=>{ dg.tri(a[0],a[1],a[2],b[0],b[1],b[2],c[0],c[1],c[2],col); dg.tri(a[0],a[1],a[2],c[0],c[1],c[2],d[0],d[1],d[2],col); };
+    const flight=(x,z,ang,y0,y1,w,col,solid)=>{ const n=Math.max(2,Math.round((y1-y0)/0.18)), run=0.3, rise=(y1-y0)/n, c=Math.cos(ang), s=Math.sin(ang);
+      for(let i=0;i<n;i++){ const t=(i+0.5)*run, yy=y0+(i+1)*rise; if(solid) box(dg,x+c*t,z+s*t,run,w,y0,yy-y0,ang,col); else box(dg,x+c*t,z+s*t,run,w,yy-0.24,0.24,ang,col); }
+      return [x+c*n*run,z+s*n*run,n*run]; };
+    const stairTower=(e,t,floors,col,rail)=>{ const w=1.3, fh=3.3, n=Math.round(fh/2/0.18), len=n*0.3;
+      for(let f=0;f<floors;f++){ const y=f*fh;
+        const [x1,z1]=e.at(t-len/2,0.25+w*1.5); flight(x1,z1,e.ang,y,y+fh/2,w,col,f===0);
+        const [x2,z2]=e.at(t+len/2,0.25+w*0.5); flight(x2,z2,e.ang+Math.PI,y+fh/2,y+fh,w,col,false);
+        bx(e,t+len/2+0.7,0.25+w,1.4,w*2,y+fh/2-0.24,0.24,col); bx(e,t-len/2-0.7,0.25+w,1.4,w*2,y+fh-0.24,0.24,col);
+        bx(e,t,0.25+w*2+0.04,len+2.8,0.1,y+fh/2,1.0,rail); } };
+    const frame=(x,z,ang,w,d,y,h,col)=>{ const c=Math.cos(ang),s=Math.sin(ang), P=(u,v)=>[x+u*c-v*s,z+u*s+v*c];
+      for(const [u,v] of [[-w/2,-d/2],[w/2,-d/2],[w/2,d/2],[-w/2,d/2]]){ const [px,pz]=P(u,v); box(dg,px,pz,0.5,0.5,y,h,ang,col); }
+      for(const v of [-d/2,d/2]){ const [px,pz]=P(0,v); box(dg,px,pz,w+0.5,0.5,y+h-0.5,0.5,ang,col); }
+      for(const u of [-w/2,w/2]){ const [px,pz]=P(u,0); box(dg,px,pz,0.5,d,y+h-0.5,0.5,ang,col); } };
+    const pot=(x,z)=>{ box(dg,x,z,0.42,0.42,0,0.4,0,C('#b8402d')); box(dg,x,z,0.5,0.5,0.4,0.35,0,C(hash2(Math.round(x*5),Math.round(z*5))<0.5?'#3f8a3a':'#c2306a')); };
+    // signs: canvas text, all packed into one atlas and drawn as two meshes (cheap on phones); lit at night
+    const signs=[];
+    const tex=(draw,w=512,h=128)=>{ const c=document.createElement('canvas'); c.width=w; c.height=h; draw(c.getContext('2d'),w,h); return c; };
+    const txt=(lines,bg,fg,font,w=512,h=128,pre)=>tex((g,W,H)=>{ if(bg){ g.fillStyle=bg; g.fillRect(0,0,W,H); } if(pre) pre(g,W,H);
+        g.fillStyle=fg; g.textAlign='center'; g.textBaseline='middle'; lines.forEach((l,i)=>{ g.font=Array.isArray(font)?font[i]:font; g.fillText(l,W/2,H*(i+0.5)/lines.length,W*0.94); }); },w,h);
+    const plane=(x,y,z,ry,w,h,cv,glow=0,back=0)=>{ signs.push({x,y,z,ry,w,h,cv,glow}); if(back) signs.push({x:x-Math.sin(ry)*back,y,z:z-Math.cos(ry)*back,ry:ry+Math.PI,w,h,cv,glow}); };
+    const signOn=(e,t,y,w,h,cv,o=0.14,glow=0)=>{ const [x,z]=e.at(t,o); plane(x,y,z,Math.atan2(e.nx,e.nz),w,h,cv,glow); };
+    const hallSign=(n)=>txt(['छात्रावास - '+n,'HALL OF RESIDENCE - '+n],'#f3ede2','#3b2f2a',['bold 40px sans-serif','bold 44px sans-serif'],512,128);
+    // ---- DJAC and NCL: grey colonnade at ground level, red bands with long glass strips above
+    for(const re of [/^DJAC$/,/^NCL$/]){ const b=BN(re); if(b){ const grey=C('#b4b1aa'), cr=C('#e2ded6');
+      for(const e of edges(b.outer)){ cl(e,0,e.L,0,3.4,grey); if(e.L>4) cols(e,0,3.4,2.3,0.6,0.42,cr); band(e,3.4,0.5,0.65,1.4,cr,0.7);
+        for(let y=3.9;y<b.H-2;y+=3.3){ pane(e,0.15,e.L-0.15,y+0.9,y+2.2,0.1,GLb); band(e,y+2.2,0.12,0.12,0.12,cr); }
+        band(e,b.H-0.9,0.9,0.15,0.4,cr,0.3); } } }
+    // ---- Rajeev Motwani Building: brick with a glass middle, concrete ledges, dark louvres and rooftop frames
+    { const b=BN(/^Rajeev Motwani/); if(b){ const es=edges(b.outer).sort((p,q)=>q.L-p.L), cr=C('#dcd7cd'), dk=C('#34393f');
+      for(const e of es){ if(e.L<4) continue; cl(e,0,e.L,0,3.3,C('#cbc6bd')); for(let y=3.3;y<b.H-1;y+=3.3) band(e,y-0.2,0.3,0.15,0.3,cr,0.2);
+        if(e.L>20){ const g0=e.L*0.34,g1=e.L*0.66;
+          for(let y=3.3;y<b.H-2;y+=3.3) pane(e,g0,g1,y+0.25,y+3.05,0.12,GLb);
+          for(let k=0;k<=6;k++) bx(e,g0+(g1-g0)*k/6,0.24,0.16,0.25,3.3,b.H-4.6,cr);
+          for(let y=6.6;y<b.H-2;y+=6.6) bx(e,(g0+g1)/2,1.0,g1-g0+0.8,2.0,y-0.35,0.35,cr);
+          for(const s of [g0-2.2,g1+2.2]) cl(e,s-1.3,s+1.3,3.3,b.H-1.4,dk,0.11);
+          for(let y=3.3;y<b.H-2;y+=3.3) for(const t of [g0*0.3,g0*0.62,e.L-g0*0.3,e.L-g0*0.62]) pane(e,t-0.55,t+0.55,y+0.9,y+2.4);
+          pane(e,g0,g1,0.2,3.0,0.12,GLb); }
+        else for(let y=3.3;y<b.H-2;y+=3.3) pane(e,e.L/2-0.6,e.L/2+0.6,y+0.9,y+2.4);
+        band(e,b.H-1.0,1.0,0.12,0.35,cr,0.3); }
+      const e=es[0]; for(const t of [3.2,e.L-3.2]){ const [x,z]=e.at(t,-3.2); frame(x,z,e.ang,5,5,b.H-0.65,4.6,cr); } } }
+
+    // ---- CSE department (HR Kadim Diwan Building): brick entrance, glass doors, name stone and flower pots
+    { const b=BN(/Kadim Diwan/); if(b){ let e=null,bd=1e9; for(const q of edges(b.outer)) if(q.L>7){ const d=Math.hypot(q.mx-2,q.mz+58); if(d<bd){ bd=d; e=q; } }
+      if(e){ const t=e.L/2, br=C('#9d4936'), st=C('#ddd6c8'); mark('cse',e,t,2);
+        pane(e,t-2.6,t+2.6,0.15,3.0,0.12,GLb); bx(e,t,1.7,7,3.4,3.1,0.4,st); for(const s of [-3.3,3.3]) bx(e,t+s,1.7,0.9,3.4,0,3.1,br);
+        for(let k=0;k<3;k++) bx(e,t,3.6+k*0.4,6,0.4,0,0.45-k*0.15,st);
+        const [sx,sz]=e.at(t-8,3.4); box(dg,sx,sz,4.8,0.5,0,1.3,e.ang,C('#6e4a3c'));
+        const m=txt(['संगणक विज्ञान एवं अभियांत्रिकी विभाग','DEPARTMENT OF','COMPUTER SCIENCE AND ENGINEERING'],'#6e4a3c','#f1e9dc',['bold 30px sans-serif','bold 30px sans-serif','bold 28px sans-serif'],512,150);
+        signOn(e,t-8,0.68,4.6,1.2,m,3.67); for(let k=0;k<9;k++){ const [x,z]=e.at(t-5.2+k*0.55,3.3); pot(x,z); }
+        for(let k=0;k<6;k++){ const [x,z]=e.at(t+4.4+k*0.6,3.3); pot(x,z); } } } }
+
+    // ---- New SAC / Indoor Sports Complex and the SAC block: sandstone walls over a red ground floor, orange pergola beams;
+    //      the glass entrance fills the recess in the WEST face (towards the SAC lawn and the OAT), with hedged lawns in front
+    for(const o of decos){ if(o.st!==STY.sac) continue; const red=C('#b8452e');
+      for(const e of edges(o.outer)) if(e.L>2.5){ cl(e,0,e.L,0,3.3,red,0.06); band(e,3.3,0.35,0.3,0.6,C('#e2cfae'),0.2); } }
+    { const b=BN(/^Indoor Sports Complex$/); if(b){ const og=C('#e0782c'), fr=C('#6d6a66');
+      const N=[[-464,922],[-460,924],[-465,934],[-470,931]];                      // the recess, from the map outline
+      ringPrism([N],0,b.H-0.65,C('#9cc2cf')); for(let i=0;i<N.length;i++) quad(paneL,N[i],N[(i+1)%N.length],0.2,b.H-1.0,C('#9cc2cf'));
+      const ox=-467, oz=926.5, ux=-6/10.82, uz=9/10.82, nx=-uz, nz=ux, ang=Math.atan2(uz,ux);   // opening line and its outward normal (west)
+      for(let k=0;k<=9;k++){ const t=-5+k*1.1; box(dg,ox+ux*t+nx*0.12,oz+uz*t+nz*0.12,0.12,0.12,0,b.H-0.65,ang,fr); }
+      for(const y of [3.4,6.8]) box(dg,ox+nx*0.12,oz+nz*0.12,10.6,0.12,y,0.14,ang,fr);
+      for(let k=0;k<12;k++){ const t=-5.2+k*0.95; box(dg,ox+ux*t+nx*2.2,oz+uz*t+nz*2.2,0.28,4.6,4.4,0.42,ang,og); }   // orange pergola beams
+      for(const s of [-5,5]) box(dg,ox+ux*s+nx*4.2,oz+uz*s+nz*4.2,0.45,0.45,0,4.4,ang,og);
+      box(dg,ox+nx*4.25,oz+nz*4.25,11,0.45,4.85,0.45,ang,og);
+      for(let k=0;k<3;k++) box(dg,ox+nx*(5.4+k*0.45),oz+nz*(5.4+k*0.45),8,0.45,0,0.45-k*0.15,ang,C('#d7cfc0'));
+      for(const s of [-1,1]) for(let r=0;r<3;r++){ const cx2=ox+ux*s*7.2+nx*(6.5+r*2.4), cz2=oz+uz*s*7.2+nz*(6.5+r*2.4); box(dg,cx2,cz2,5.5,0.9,0,0.9,ang,C('#3f7d35')); }
+      markOcc(ox+nx*6,oz+nz*6,7); } }
+    // SAC block behind the OAT: orange truss beams along the upper floor on its faces
+    for(const o of decos){ if(o.st!==STY.sac) continue; const [ccx,ccz]=centroid(o.outer); if(Math.hypot(ccx+522,ccz-948)>8) continue; const og=C('#e0782c');
+      for(const e of edges(o.outer)) if(e.L>8){ const n=Math.floor(e.L/1.6); for(let k=0;k<n;k++) bx(e,(k+0.5)*e.L/n,0.8,0.2,1.6,7.0,0.3,og); band(e,7.3,0.25,1.6,0.25,og); } }
+    // ---- Tutorial Block: deep concrete overhangs; the round brick stair drum and the entrance are on the north side, facing L5 / L6
+    { const b=BN(/^Tutorial Block$/); if(b){ const cr=C('#cbc5b8');
+      for(const q of edges(b.outer)) if(q.L>3) band(q,3.15,0.4,0.8,1.6,cr,1.2);
+      let p=b.outer[0]; for(const q of b.outer) if(q[1]<p[1]) p=q;
+      const x=p[0], z=p[1]+4.2, ta=Math.atan2(206-z,-222-x), ca=Math.cos(ta), sa=Math.sin(ta), ct=Math.cos(ta+Math.PI/2), st=Math.sin(ta+Math.PI/2);
+      addMesh(new THREE.CylinderGeometry(4.6,4.6,b.H+0.8,20),stdMat(0xa04b37),x,(b.H+0.8)/2,z);
+      addMesh(new THREE.CylinderGeometry(4.85,4.85,0.55,20),stdMat(0xcbc5b8),x,b.H+0.85,z);
+      for(let k=0;k<5;k++){ const a=ta+(k-2)*0.38; box(dg,x+Math.cos(a)*4.62,z+Math.sin(a)*4.62,0.9,0.08,3.9,1.2,a+Math.PI/2,C('#3a4651')); }
+      box(dg,x+ca*4.65,z+sa*4.65,2.4,0.3,0,2.6,ta+Math.PI/2,C('#2e3338'));
+      plane(x+ca*4.85,2.95,z+sa*4.85,Math.atan2(ca,sa),2.2,0.5,txt(['TUTORIAL BLOCK'],'#1f7a4a','#ffffff','bold 56px sans-serif',512,110),0.5);
+      box(dg,x+ca*6.4,z+sa*6.4,3.8,2.6,3.0,0.3,ta+Math.PI/2,cr); for(const s of [-1.7,1.7]) box(dg,x+ca*7.5+ct*s,z+sa*7.5+st*s,0.3,0.3,0,3.0,ta,cr);
+      markOcc(x+ca*6,z+sa*6,4); } }
+
+    // ---- old Lecture Hall Complex (L10–L15): red brick halls raised on concrete pillars, with outside stairs
+    for(const o of decos){ if(o.cust!=='lhc') continue; const R0=o.rings, cr=C('#bdb8ae'), red=C('#a24d39');
+      ringPrism(R0.map((r,i)=>i?offsetRing(r,-1.4):offsetRing(r,1.4)),0,3.5,C('#8c8882'));
+      const es=edges(R0[0]); for(const e of es) if(e.L>2){ const n=Math.max(1,Math.round(e.L/4)); for(let k=0;k<=n;k++) bx(e,e.L*k/n,-0.45,0.7,0.7,0,3.6,cr); }
+      ringPrism(R0,3.6,10.4,red); fillPoly(dg,R0,10.42,C('#b7b1a6'));
+      for(const e of es) if(e.L>2){ band(e,3.35,0.5,0.15,0.5,cr,0.3); band(e,9.9,0.8,0.15,0.5,cr,0.3); if(e.L>5) for(let k=1;k<Math.round(e.L/3);k++) cl(e,k*e.L/Math.round(e.L/3)-0.15,k*e.L/Math.round(e.L/3)+0.15,3.85,9.9,cr,0.08); }
+      const e=es.slice().sort((p,q)=>q.L-p.L)[0]; const [x,z]=e.at(0.6,1.3); flight(x,z,e.ang,0,3.6,1.5,cr,true); bx(e,e.L/2,2.1,e.L*0.5,0.12,3.6,1.0,cr); }
+
+    // ---- L20 (new Lecture Hall Complex): the verandah and the wavy concrete roof run along the whole curved north-west front (the arc), facing the lawn
+    { const b=BN(/^New Lecture Hall Complex$/); if(b){ const cr=C('#e3dac7');
+      const arc=edges(b.outer).filter(q=>q.L>10&&q.nz<0&&q.mx>-86&&q.mx<-36&&q.mz>252&&q.mz<292);
+      for(const e of arc){ cols(e,0,3.7,4.2,2.8,0.6,cr); band(e,3.7,0.45,2.8,5.8,cr,0.8); band(e,4.15,1.0,5.6,0.16,cr,0.8);
+        const n=Math.max(1,Math.round(e.L/8)), y=b.H+0.25, P=(t,o,yy)=>{ const [x,z]=e.at(t,o); return [x,yy,z]; };
+        for(let k=0;k<n;k++){ const t0=e.L*k/n-0.4, t1=e.L*(k+1)/n+0.4, tm=(t0+t1)/2;
+          q3(P(t0,-7,y+1.7),P(tm,-7,y+0.35),P(tm,3.2,y+0.35),P(t0,3.2,y+1.7),cr); q3(P(tm,-7,y+0.35),P(t1,-7,y+1.7),P(t1,3.2,y+1.7),P(tm,3.2,y+0.35),cr);
+          q3(P(t0,-7,y+1.45),P(tm,-7,y+0.1),P(tm,3.2,y+0.1),P(t0,3.2,y+1.45),C('#cfc5b0')); q3(P(tm,-7,y+0.1),P(t1,-7,y+1.45),P(t1,3.2,y+1.45),P(tm,3.2,y+0.1),C('#cfc5b0'));
+          bx(e,tm,-2,0.7,0.7,b.H-0.65,1.0,cr); bx(e,tm,2.2,0.7,0.7,b.H-0.65,1.0,cr); } }
+      const mid=arc.sort((p,q)=>q.L-p.L)[0]; if(mid) for(let k=0;k<4;k++) bx(mid,mid.L/2,6.2+k*0.45,Math.min(16,mid.L-2),0.45,0,0.6-k*0.15,C('#d6cfc1')); } }
+    // ---- Wind Tunnel: raised on concrete stilts, saw-tooth roof, painted name across the front
+    for(const o of decos){ if(o.cust!=='wt') continue; const R0=o.rings, conc=C('#b6b3ac'), up=C('#dedbd4');
+      ringPrism(R0.map((r,i)=>i?offsetRing(r,-2.6):offsetRing(r,2.6)),0,4.3,C('#8f8d88'));
+      const es=edges(R0[0]); for(const e of es){ if(e.L<3) continue; const n=Math.max(1,Math.round(e.L/7)); for(let k=0;k<=n;k++) bx(e,e.L*k/n,-0.5,0.8,0.8,0,4.7,conc); }
+      ringPrism(R0,4.7,11.2,up); for(const e of es) if(e.L>2){ band(e,4.4,0.6,0.15,0.6,conc,0.4); band(e,10.8,0.6,0.15,0.5,conc,0.4); }
+      // saw-tooth roof
+      { const outer=R0[0], ang=mainAngle(outer)+Math.PI/2, c=Math.cos(ang), s=Math.sin(ang); const L=outer.map(p=>[p[0]*c+p[1]*s,-p[0]*s+p[1]*c]);
+        const W=(u,v)=>[u*c-v*s,u*s+v*c]; const span=v=>{ const xs=[]; for(let i=0;i<L.length;i++){ const a=L[i],b=L[(i+1)%L.length]; if((a[1]>v)!==(b[1]>v)) xs.push(a[0]+(v-a[1])/(b[1]-a[1])*(b[0]-a[0])); } xs.sort((p,q)=>p-q); let best=null; for(let i=0;i+1<xs.length;i+=2) if(!best||xs[i+1]-xs[i]>best[1]-best[0]) best=[xs[i],xs[i+1]]; return best; };
+        const mnv=Math.min(...L.map(p=>p[1])), mxv=Math.max(...L.map(p=>p[1])), pitch=7.5, y0=11.2, hh=3.4, rc=C('#a19e97');
+        for(let v=mnv+0.6; v+pitch<=mxv-0.3; v+=pitch){ const s0=span(v+0.05), s1=span(v+pitch-0.05); if(!s0||!s1) continue; const u0=Math.max(s0[0],s1[0])+0.4, u1=Math.min(s0[1],s1[1])-0.4; if(u1-u0<4) continue;
+          const A=W(u0,v),B=W(u1,v),Cc=W(u1,v+pitch),D=W(u0,v+pitch);
+          q3([A[0],y0,A[1]],[B[0],y0,B[1]],[Cc[0],y0+hh,Cc[1]],[D[0],y0+hh,D[1]],rc);
+          quad(paneL,D,Cc,y0,y0+hh-0.3,GLb); quad(dg,D,Cc,y0+hh-0.3,y0+hh,rc);
+          dg.tri(A[0],y0,A[1],D[0],y0,D[1],D[0],y0+hh,D[1],up); dg.tri(B[0],y0,B[1],Cc[0],y0,Cc[1],Cc[0],y0+hh,Cc[1],up); } }
+      // the painted front: Hindi name, emblem and NATIONAL WIND TUNNEL FACILITY IITK
+      const e=frontEdge(R0[0],18), Lm=e.L-1.2, Hm=5.6, W=2048, H=Math.max(64,Math.round(W*Hm/Lm));
+      const m=tex((g,w,h)=>{ g.fillStyle='#e8e6e0'; g.fillRect(0,0,w,h); for(let i=0;i<70;i++){ g.fillStyle=`rgba(90,90,90,${0.04+0.06*((i*37)%10)/10})`; g.fillRect((i*131)%w,0,3+(i%5)*3,h); }
+        g.fillStyle='#2b5aa6'; g.textBaseline='middle'; g.textAlign='center'; g.font=`bold ${h*0.2|0}px sans-serif`; g.fillText('राष्ट्रीय वायु प्रवाही',w*0.17,h*0.36); g.fillText('सुरंग सुविधा',w*0.17,h*0.64);
+        const cx=w*0.4, cy=h/2, r=h*0.34; g.strokeStyle='#2b5aa6'; g.lineWidth=h*0.05; g.beginPath(); g.arc(cx,cy,r,0,7); g.stroke(); g.lineWidth=h*0.025; for(let k=0;k<16;k++){ const a=k/16*Math.PI*2; g.beginPath(); g.moveTo(cx+Math.cos(a)*r*0.3,cy+Math.sin(a)*r*0.3); g.lineTo(cx+Math.cos(a)*r*0.85,cy+Math.sin(a)*r*0.85); g.stroke(); }
+        g.font=`bold ${h*0.27|0}px sans-serif`; g.fillText('NATIONAL WIND TUNNEL',w*0.73,h*0.33,w*0.5); g.fillText('FACILITY  IITK',w*0.73,h*0.68,w*0.5); },W,H);
+      signOn(e,e.L/2,4.9+Hm/2,Lm,Hm,m,0.12); const nf=Math.round(e.L/9); for(let k=1;k<nf;k++) bx(e,e.L*k/nf,0.35,0.6,0.55,4.7,6.5,conc); }
+
+    // ---- CC canteen: yellow kiosk under a green roof, yellow benches round it
+    for(const o of decos){ if(o.cust!=='cck') continue; const R0=o.rings[0], yel=C('#f1c21c'), grn=C('#2f9a4c');
+      const inner=offsetRing(R0,0.5); ringPrism([inner],0,3.0,yel); for(const e of edges(inner)) if(e.L>1.4) pane(e,0.25,e.L-0.25,0.95,2.5,0.06,GLb);
+      const roof=offsetRing(R0,-1.4); ringPrism([roof],3.0,3.5,grn); fillPoly(dg,[roof],3.52,C('#38ad57')); ringPrism([offsetRing(R0,-1.45)],2.95,3.05,C('#f4f1e8'));
+      const r0=Math.sqrt(o.area/Math.PI)+4.6; for(let k=0;k<7;k++){ const a=k/7*Math.PI*2+0.4, x=o.cx+Math.cos(a)*r0, z=o.cz+Math.sin(a)*r0;
+        if(bInfo.some(b=>Math.abs(b.cx-x)<90&&Math.abs(b.cz-z)<90&&pip(x,z,b.outer))) continue; const t=a+Math.PI/2;
+        box(dg,x,z,2.4,0.75,0.42,0.1,t,yel); for(const s of [-1,1]) box(dg,x+Math.cos(t)*s*1,z+Math.sin(t)*s*1,0.15,0.6,0,0.42,t,yel); markOcc(x,z,1.6); } }
+
+    // ---- Open Air Theatre: sandstone-grey tiers with stepped aisles and low divider walls, a rim walk with railing, lamp posts,
+    //      a control box and concrete canopy frames. Both ends are open (stairs down each side); the food court is an arcade under the back rows.
+    { const cx=-532, cz=940, R=21.5, r0=6, NT=13, top=5.6, rise=top/NT, dr=(R-1.2-r0)/NT, AE=1.88*Math.PI, SP=AE-Math.PI;
+      const tread=C('#b3aa9e'), riser=C('#857d72'), aisleC=C('#d2cbbf'), conc=C('#c9c2b5'), railC=C('#5d5a56'), beige=C('#dccfb8');
+      const P=(a,r)=>[cx+Math.cos(a)*r,cz+Math.sin(a)*r];
+      const aisles=[1.05,1.32,1.6,1.83].map(f=>f*Math.PI), inA=(a,r)=>aisles.some(q=>Math.abs(a-q)*r<1.1);
+      const seg=52;
+      for(let k=0;k<NT;k++){ const ra=r0+k*dr, rb=ra+dr, y=(k+1)*rise;
+        for(let s=0;s<seg;s++){ const a0=Math.PI+SP*s/seg, a1=Math.PI+SP*(s+1)/seg, A=P(a0,ra),B=P(a1,ra),Cq=P(a1,rb),D=P(a0,rb);
+          if(inA((a0+a1)/2,(ra+rb)/2)){ const rm=(ra+rb)/2, M0=P(a0,rm), M1=P(a1,rm);
+            dg.flat(A[0],A[1],B[0],B[1],M1[0],M1[1],y-rise/2,aisleC); dg.flat(A[0],A[1],M1[0],M1[1],M0[0],M0[1],y-rise/2,aisleC);
+            dg.flat(M0[0],M0[1],M1[0],M1[1],Cq[0],Cq[1],y,aisleC); dg.flat(M0[0],M0[1],Cq[0],Cq[1],D[0],D[1],y,aisleC);
+            quad(dg,B,A,y-rise,y-rise/2,riser); quad(dg,M1,M0,y-rise/2,y,riser); }
+          else { dg.flat(A[0],A[1],B[0],B[1],Cq[0],Cq[1],y,tread); dg.flat(A[0],A[1],Cq[0],Cq[1],D[0],D[1],y,tread); quad(dg,B,A,y-rise,y,riser); } } }
+      for(const a of [Math.PI,AE]) for(let k=0;k<NT;k++){ const ra=r0+k*dr; quad(dg,P(a,ra),P(a,ra+dr),0,(k+1)*rise,conc); }
+      // low divider walls beside every aisle (as in the photos), sloping with the tiers
+      for(const q of aisles) for(const sd of [-1,1]){ const rm=(r0+R)/2, a=q+sd*1.2/rm, p0=P(a,r0+dr), p1=P(a,R-1.2);
+        q3([p0[0],rise,p0[1]],[p1[0],top,p1[1]],[p1[0],top+0.55,p1[1]],[p0[0],rise+0.55,p0[1]],beige); }
+      // rim walk, railing and the outer face (open below the back rows where the food court is)
+      const F0=1.14*Math.PI, F1=1.53*Math.PI, inF=a=>a>F0&&a<F1, rs=44;
+      for(let s=0;s<rs;s++){ const a0=Math.PI+SP*s/rs, a1=Math.PI+SP*(s+1)/rs, am=(a0+a1)/2, A=P(a0,R-1.2),B=P(a1,R-1.2),Cq=P(a1,R),D=P(a0,R);
+        dg.flat(A[0],A[1],B[0],B[1],Cq[0],Cq[1],top,aisleC); dg.flat(A[0],A[1],Cq[0],Cq[1],D[0],D[1],top,aisleC);
+        quad(dg,P(a0,R-0.06),P(a1,R-0.06),top+0.95,top+1.05,railC); quad(dg,P(a0,R-0.06),P(a1,R-0.06),top+0.5,top+0.56,railC);
+        const [px,pz]=P(a0,R-0.06); box(dg,px,pz,0.07,0.07,top,1.05,a0,railC);
+        quad(dg,P(a0,R),P(a1,R),inF(am)?5.0:0,top,C('#cdbb9b')); }
+      // open ends: paved ground paths into the bowl beside the stage on both sides
+      for(const [a0,a1] of [[Math.PI-0.09,Math.PI],[AE,AE+0.09]]){ const n=6; for(let i=0;i<n;i++){ const b0=a0+(a1-a0)*i/n, b1=a0+(a1-a0)*(i+1)/n, A=P(b0,r0),B=P(b1,r0),Cq=P(b1,R+2),D=P(b0,R+2);
+        dg.flat(A[0],A[1],B[0],B[1],Cq[0],Cq[1],0.06,C('#cfc6b6')); dg.flat(A[0],A[1],Cq[0],Cq[1],D[0],D[1],0.06,C('#cfc6b6')); } }
+      // stairs up the outside at both ends to the rim walk
+      for(const [a,dir] of [[Math.PI+0.012,1],[AE-0.012,-1]]){ const n=Math.round(top/0.19), rr2=R+1.0;
+        for(let i=0;i<n;i++){ const aa=a+dir*(i+0.5)*0.3/rr2, [x,z]=P(aa,rr2); box(dg,x,z,0.32,1.8,0,(i+1)*top/n,aa+Math.PI/2,conc); }
+        for(let i=0;i<n;i+=2){ const aa=a+dir*(i+0.5)*0.3/rr2, [x,z]=P(aa,rr2+0.9); box(dg,x,z,0.06,0.06,(i+1)*top/n,1.0,aa,railC); } }
+      // tall lamp posts with square heads, the control box and two open canopy frames on the rim
+      for(let f=1.04;f<1.87;f+=0.115){ const a=f*Math.PI, [x,z]=P(a,R-0.45); box(dg,x,z,0.2,0.2,top,4.6,a,C('#4d4a47')); box(dg,x,z,0.75,0.5,top+4.5,0.5,a,C('#6e4b39')); }
+      { const a=1.74*Math.PI, [x,z]=P(a,R-2.2); box(dg,x,z,4.2,3.4,top,3.0,a+Math.PI/2,beige); box(dg,x,z,4.6,3.8,top+3.0,0.3,a+Math.PI/2,C('#c9bca4'));
+        const [wx,wz]=P(a,R-3.92); box(dg,wx,wz,2.4,0.06,top+1.2,1.1,a+Math.PI/2,C('#2b3640')); const [dx2,dz2]=P(a+0.06,R-0.5); box(dg,dx2,dz2,0.9,0.06,top,2.1,a,C('#d9567a')); }
+      for(const f of [1.36,1.62]){ const a=f*Math.PI, t=a+Math.PI/2, [x,z]=P(a,R-0.9); for(const s of [-1.5,1.5]) box(dg,x+Math.cos(t)*s,z+Math.sin(t)*s,0.5,0.5,top,3.3,t,beige); box(dg,x,z,4.0,2.2,top+3.3,0.4,t,beige); }
+      // murals on the two end walls, facing the stage
+      const mural=tex((g,W,H)=>{ g.fillStyle='#2b2f3a'; g.fillRect(0,0,W,H); const cs=['#f2c230','#e8453c','#2f9bd8','#3fbf6a','#ef7fb4','#ffffff'];
+        for(let i=0;i<26;i++){ g.fillStyle=cs[i%cs.length]; g.beginPath(); g.ellipse((i*97)%W,(i*53)%H,30+(i*13)%60,18+(i*7)%40,(i%5)*0.6,0,7); g.fill(); }
+        g.font='bold 120px sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.lineWidth=10; g.strokeStyle='#111'; g.strokeText('OAT',W/2,H/2); g.fillStyle='#fdf2a0'; g.fillText('OAT',W/2,H/2); },512,180);
+      for(const [a,sg] of [[Math.PI,1],[AE,-1]]){ const rm=r0+dr*3, [x,z]=P(a,rm), nx=-Math.sin(a)*sg, nz=Math.cos(a)*sg; plane(x+nx*0.08,1.1,z+nz*0.08,Math.atan2(nx,nz),dr*5.5,1.6,mural,0); }
+      // the food court: shopfronts set back under the back rows, columns, a raised platform with stone benches, stairs up on both sides
+      const fr=R-1.4, shopW=C('#d8d1c4');
+      for(let s=0;s<rs;s++){ const a0=Math.PI+SP*s/rs, a1=Math.PI+SP*(s+1)/rs, am=(a0+a1)/2; if(!inF(am)) continue;
+        const A=P(a0,fr),B=P(a1,fr),Cq=P(a1,R+0.25),D=P(a0,R+0.25); dg.flat(A[0],A[1],B[0],B[1],Cq[0],Cq[1],5.4,conc); dg.flat(A[0],A[1],Cq[0],Cq[1],D[0],D[1],5.4,conc);
+        dg.flat(A[0],A[1],B[0],B[1],Cq[0],Cq[1],5.0,C('#b7b0a4')); dg.flat(A[0],A[1],Cq[0],Cq[1],D[0],D[1],5.0,C('#b7b0a4')); quad(dg,D,Cq,5.0,5.4,conc);
+        quad(dg,P(a0,fr),P(a1,fr),0,5.0,shopW); }
+      for(let i=0;i<=7;i++){ const a=F0+(F1-F0)*i/7, [x,z]=P(a,R+0.05); box(dg,x,z,0.6,0.6,0,5.0,a,conc); }
+      const shops=[[null,'#8a8f95','',1.18],['NAUGHTY BLENDERS','#f5f7fb','#1f4fb8',1.24],['BURGER SINGH','#1f4fb8','#ffd23f',1.30],["Aladdin's",'#231818','#ff5252',1.36],[null,'#8a8f95','',1.42],["Domino's",'#0b5ea8','#ffffff',1.48]];
+      for(const [nm,bg,fg,af] of shops){ const a=af*Math.PI, ha=0.029*Math.PI, ry=Math.atan2(Math.cos(a),Math.sin(a)), tg=a+Math.PI/2;
+        const f0=P(a-ha,fr+0.06), f1=P(a+ha,fr+0.06); if(!nm){ quad(dg,f0,f1,0.1,3.2,C('#80858b')); continue; }
+        quad(dg,f0,f1,0,3.2,C(bg).multiplyScalar(0.8)); quad(paneL,P(a-ha*0.8,fr+0.1),P(a+ha*0.2,fr+0.1),0.95,2.7,C('#f3dfae')); quad(dg,P(a+ha*0.38,fr+0.1),P(a+ha*0.85,fr+0.1),0,2.5,C('#5e4130'));
+        const [fx,fz]=P(a,fr+0.2); box(dg,fx,fz,3.85,0.35,3.2,1.4,tg,C(bg)); const [sx,sz]=P(a,fr+0.39); plane(sx,3.9,sz,ry,3.65,1.15,txt([nm],bg,fg,'bold 60px sans-serif',512,150),1);
+        const [kx,kz]=P(a-ha*0.3,fr+0.7); box(dg,kx,kz,2.0,0.7,0,1.05,tg,C(bg).multiplyScalar(0.65)); }
+      { const b0=F0-0.025*Math.PI, b1=F1+0.025*Math.PI, n=30; for(let i=0;i<n;i++){ const a0=b0+(b1-b0)*i/n, a1=b0+(b1-b0)*(i+1)/n, A=P(a0,R+2.2),B=P(a1,R+2.2),Cq=P(a1,R+6.8),D=P(a0,R+6.8);
+          dg.flat(A[0],A[1],B[0],B[1],Cq[0],Cq[1],0.35,C('#bdb6aa')); dg.flat(A[0],A[1],Cq[0],Cq[1],D[0],D[1],0.35,C('#bdb6aa')); quad(dg,D,Cq,0,0.35,C('#a59e92')); quad(dg,B,A,0,0.35,C('#a59e92'));
+          if(i%3===1){ const am=(a0+a1)/2, [x,z]=P(am,R+6.2); box(dg,x,z,2.6,0.6,0.35,0.45,am+Math.PI/2,C('#d3ccc0')); } } }
+      markOcc(cx,cz-12,26); labels.push({name:'OAT Food Court',x:cx-6,z:cz-R-5,y:7,rank:4,tier:3,cat:'food',alt:['Food court','Food court below OAT','OAT shops'],size:12}); }
+    // ---- the SAC wing beside the east end of the OAT: an open concrete frame whose first deck is level with the OAT rim walk,
+    //      with an open stair (orange railing) climbing to it on the outside, so the corridor can be reached from the ground
+    { const A=[-513,941], B=[-501,916], W=5.2, ux=(B[0]-A[0]), uz=(B[1]-A[1]), L=Math.hypot(ux,uz), u=[ux/L,uz/L], n=[u[1],-u[0]], ang=Math.atan2(uz,ux);
+      const at=(t,o)=>[A[0]+u[0]*t+n[0]*o, A[1]+u[1]*t+n[1]*o], fr=C('#d6bf98'), og=C('#e0782c'), st=C('#c9c2b5'), y1=5.6, y2=9.8, top=13.4;
+      const nb=Math.round(L/4.6); for(let k=0;k<=nb;k++) for(const o of [0.3,W-0.3]){ const [x,z]=at(L*k/nb,o); box(dg,x,z,0.6,0.6,0,top,ang,fr); }
+      for(const y of [y1,y2]){ const [x,z]=at(L/2,W/2); box(dg,x,z,L,W,y-0.3,0.3,ang,C('#cbbd9f'));
+        for(const o of [0.15,W-0.15]){ const [bx2,bz2]=at(L/2,o); box(dg,bx2,bz2,L,0.12,y+0.95,0.1,ang,og); const nt=Math.round(L/1.2); for(let k=0;k<nt;k++){ const [tx,tz]=at((k+0.5)*L/nt,o); box(dg,tx,tz,0.08,0.08,y,1.0,ang+(k%2?0.6:-0.6),og); } } }
+      { const [x,z]=at(L/2,W/2); box(dg,x,z,L+0.6,W+0.6,top-0.3,0.45,ang,fr); }
+      for(let k=0;k<nb;k++) for(const o of [0.3,W-0.3]){ const [x,z]=at(L*(k+0.5)/nb,o); box(dg,x,z,L/nb,0.4,top-0.8,0.5,ang,fr); }
+      // outside stair on the east face: from the ground at the north end up to the corridor deck
+      const ns=Math.round(y1/0.18), run=0.29, o=-1.0, t0=L-1.5;
+      for(let i=0;i<ns;i++){ const t=t0-(i+0.5)*run, yy=(i+1)*y1/ns, [x,z]=at(t,o); box(dg,x,z,run,1.7,0,yy,ang,st); }
+      { const tl=t0-ns*run-1.0, [x,z]=at(tl,o+0.4); box(dg,x,z,2.0,2.6,y1-0.3,0.3,ang,st); }          // landing joining the deck
+      for(let i=0;i<=ns;i+=2){ const t=t0-i*run, yy=i*y1/ns, [x,z]=at(t,o-0.85); box(dg,x,z,0.07,0.07,yy,1.0,ang,og); }
+      for(let i=0;i<ns;i+=2){ const t=t0-(i+1)*run, yy=(i+1)*y1/ns, [x,z]=at(t,o-0.85); box(dg,x,z,run*2+0.05,0.08,yy+0.95,0.08,ang,og); }
+      { const [x,z]=at(t0+0.6,o); box(dg,x,z,1.2,1.9,0,0.06,ang,st); markOcc(x,z,2); } }
+    // ---- Kargil Chowk: soldier statue on a black stepped pedestal
+    { const kg=(data.info||[]).find(r=>r.n==='Kargil circle'); if(kg){ const x=kg.x, z=kg.z, blk=C('#2a2a2c'), ol=C('#5a5640'), S=1.5;
+      addMesh(new THREE.CylinderGeometry(2.9,3.1,0.6,24),stdMat(0x2c2c2e),x,0.3,z); addMesh(new THREE.CylinderGeometry(1.9,2.1,0.7,20),stdMat(0x353537),x,0.95,z);
+      box(dg,x,z,1.5,1.5,1.3,2.3,0,blk); box(dg,x,z,1.9,1.9,3.6,0.25,0,blk);
+      const y=3.85; for(const s of [-1,1]) box(dg,x+s*0.17*S,z,0.24*S,0.3*S,y,0.95*S,0,ol); box(dg,x,z,0.7*S,0.4*S,y+0.95*S,0.9*S,0,ol);
+      box(dg,x-0.45*S,z,0.18*S,0.22*S,y+1.05*S,0.8*S,0,ol); box(dg,x+0.45*S,z-0.12*S,0.18*S,0.22*S,y+1.3*S,0.6*S,0,ol); box(dg,x+0.52*S,z-0.25*S,0.08*S,0.08*S,y+0.7*S,1.75*S,0,blk);
+      addMesh(new THREE.SphereGeometry(0.19*S,10,8),stdMat(0x5a5640),x,y+2.05*S,z); addMesh(new THREE.CylinderGeometry(0.22*S,0.24*S,0.14*S,10),stdMat(0x45432f),x,y+2.22*S,z);
+      for(let k=0;k<20;k++){ const a=k/20*Math.PI*2; box(dg,x+Math.cos(a)*4.2,z+Math.sin(a)*4.2,1.3,0.35,0,0.3,a+Math.PI/2,C(k%2?'#f3f1ec':'#c8372d')); }
+      markOcc(x,z,4.5); const l=labels.find(q=>q.name==='Kargil Circle'); if(l) l.y=9; } }
+
+    // ---- Kendriya Vidyalaya gate: white pillars and the red name boards on the kerb (lined up with the lane it sits on)
+    { const g=DP.find(p=>(p.t==='gate'||p.t==='lift_gate')&&Math.hypot(p.x-79,p.z-558)<6); if(g){ const wy=wayAt(g.x,g.z); const ang=wy?wy.ang:0, w=wy?Math.max(5,wy.w+2):6, cx=Math.cos(ang+Math.PI/2), cz=Math.sin(ang+Math.PI/2);
+      const m=txt(['KENDRIYA VIDYALAYA'],'#c4283a','#ffffff','bold 58px sans-serif',512,80), m2=txt(['केन्द्रीय विद्यालय'],'#c4283a','#ffffff','bold 58px sans-serif',512,80);
+      for(const s of [-1,1]){ const px=g.x+cx*s*(w/2+0.7), pz=g.z+cz*s*(w/2+0.7); box(dg,px,pz,1.2,1.2,0,3.4,ang,C('#f1eee8')); box(dg,px,pz,0.8,1.25,1.2,1.3,ang,C('#7a1f2b'));
+        const bxp=g.x+cx*s*(w/2+5.2), bzp=g.z+cz*s*(w/2+5.2), ba=ang+Math.PI/2; box(dg,bxp,bzp,7.6,0.3,0,1.6,ba,C('#c4283a')); box(dg,bxp,bzp,7.9,0.45,0,0.3,ba,C('#e8e3d8'));
+        plane(bxp+Math.cos(ang)*0.17,0.95,bzp+Math.sin(ang)*0.17,Math.atan2(Math.cos(ang),Math.sin(ang)),7.4,0.95,s<0?m:m2,0,0.34); } } }
+
+    // ---- main gate (as in the videos): long red boundary walls along both sides of the entry road with the institute name
+    //      (Hindi on the north wall, English on the south wall), the red "IIT Kanpur" truss sign, the blue board and the welcome board
+    { const red=C('#b0483a'), cap=C('#cdc6b9');
+      const wallX=(x0,x1,z)=>{ box(dg,(x0+x1)/2,z,x1-x0,0.5,0,2.4,0,red); box(dg,(x0+x1)/2,z,x1-x0+0.2,0.7,2.4,0.16,0,cap); for(let x=x0;x<=x1+0.01;x+=4.4) box(dg,x,z,0.7,0.62,0,2.6,0,red); for(let x=x0;x<=x1;x+=3) markOcc(x,z,1.4); };
+      wallX(1028,1094,286.4); wallX(1028,1094,305.8);
+      plane(1062,1.25,286.4+0.34,0,32,1.3,txt(['भारतीय प्रौद्योगिकी संस्थान कानपुर'],null,'#f1e8dc','bold 78px sans-serif',1024,104),0.25);
+      plane(1062,1.25,305.8-0.34,Math.PI,32,1.2,txt(['INDIAN INSTITUTE OF TECHNOLOGY KANPUR'],null,'#f1e8dc','bold 66px sans-serif',1024,96),0.25);
+      const sx=1101, sz=280.5; box(dg,sx,sz,0.5,11,3.2,2.2,0,red); for(const s of [-4.2,4.2]){ box(dg,sx-0.6,sz+s,0.5,0.5,0,4.4,0,red); box(dg,sx+0.8,sz+s,0.5,0.5,0,3.4,0,red); }
+      plane(sx+0.27,4.3,sz,Math.PI/2,10.6,2.0,txt(['आईआईटी कानपुर'],'#b4583c','#f3efe6','bold 70px sans-serif',512,100),0.4,0.54);
+      const bxp=1104, bzp=312.5; for(const s of [-3.6,3.6]) box(dg,bxp,bzp+s,0.3,0.3,0,6,0,C('#9aa0a6')); box(dg,bxp,bzp,0.25,8.4,4,2.4,0,C('#2463b0'));
+      plane(bxp+0.14,5.2,bzp,Math.PI/2,8.2,2.2,txt(['भारतीय प्रौद्योगिकी संस्थान, कानपुर','INDIAN INSTITUTE OF TECHNOLOGY KANPUR'],'#2463b0','#ffffff',['bold 40px sans-serif','bold 32px sans-serif'],512,128),0.4,0.28);
+      markOcc(sx,sz,6); markOcc(bxp,bzp,5);
+      // red "Welcome I.I.T. Kanpur / 30 Speed Limit" board on the island between the lanes, by the barrier and the cabin
+      const wx=1011, wz=290.6; box(dg,wx,wz,2.4,1.3,0,0.45,0,C('#b4553a')); for(const s of [-0.8,0.8]) box(dg,wx,wz+s,0.1,0.1,0.45,2.9,0,C('#3a3d42')); box(dg,wx,wz,0.08,1.8,1.1,2.4,0,C('#f4f1ea'));
+      const wm=txt(['WELCOME','I.I.T.','KANPUR','( 30 )','Speed Limit'],'#c8312b','#ffffff',['bold 34px sans-serif','bold 62px sans-serif','bold 30px sans-serif','bold 44px sans-serif','bold 26px sans-serif'],256,330);
+      plane(wx+0.05,2.3,wz,Math.PI/2,1.7,2.2,wm,0.3,0.1); markOcc(wx,wz,2);
+      labels.push({name:'Main Gate (SIS)',x:1040,z:297,y:6,rank:12,tier:2,cat:'civic',alt:['Main Gate','IIT Gate','Entrance','SIS hut','Security'],size:12}); }
+
+    // ---- Hall 1: red brick with white balconies;  Hall 3: white frame with light-blue tile panels;  Hall 10 / 11: light beige with a slim roof pergola
+    for(const o of decos){ if(o.st!==STY.hall1&&o.st!==STY.hall3&&o.st!==STY.hall10) continue; const es=edges(o.outer), fl=Math.max(1,Math.round((o.H-0.7)/3.3));
+      if(o.st===STY.hall1){ for(const e of es.filter(q=>q.L>14)) { const n=Math.max(1,Math.round(e.L/7.2)); for(let f=1;f<fl;f++) for(let k=0;k<n;k++) bx(e,(k+0.5)*e.L/n,0.65,2.6,1.3,f*3.3-0.15,1.15,C('#f1eee8')); } }
+      else if(o.st===STY.hall3){ const bl=C('#b6cad9'); for(const e of es) if(e.L>4){ const n=Math.max(1,Math.round(e.L/4.2)); for(let f=0;f<fl;f++) for(let k=0;k<n;k++){ const t=(k+0.5)*e.L/n, hw=e.L/n/2-0.35; cl(e,t-hw,t+hw,f*3.3+0.25,f*3.3+1.05,bl,0.08); } } }
+      else { const lt=C('#ece2cf'); for(const e of es.filter(q=>q.L>16).sort((p,q)=>q.L-p.L).slice(0,2)){ const n=Math.max(2,Math.round(e.L/9.2)); for(let k=0;k<=n;k++) bx(e,e.L*k/n,0.3,0.35,0.35,o.H-0.7,2.0,lt); band(e,o.H+1.1,0.22,0.3,0.35,lt); band(e,o.H+1.1,0.22,1.4,0.22,lt); } } }
+    { const h3=BN(/^Hall 3 Block 1$/); if(h3){ const cv=txt(['छात्रावास III             HOSTEL III'],null,'#22303c','bold 62px sans-serif',1024,100); for(const e of edges(h3.outer).sort((p,q)=>q.L-p.L).slice(0,2)) signOn(e,e.L*0.32,3.95,15,1.4,cv,0.56); } }
+
+    // ---- Hall 12 and Hall 13 entrances: the block joining the canteen to Block A, with the big cream portal and the name board facing the road (south)
+    const hallEntrance=(cRe,aRe,roman)=>{ const cb=BN(cRe), ab=BN(aRe); if(!(cb&&ab)) return; const bb=o=>{ let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9; for(const [x,z] of o){ x0=Math.min(x0,x);x1=Math.max(x1,x);z0=Math.min(z0,z);z1=Math.max(z1,z);} return {x0,x1,z0,z1}; };
+      const A=bb(ab.outer), Cb=bb(cb.outer), west=A.x1<Cb.x0, xa=west?A.x1:Cb.x1, xb=west?Cb.x0:A.x0, za=Math.max(A.z0,Cb.z0)+5, zb=Math.min(A.z1,Cb.z1);
+      if(xb-xa>4&&zb-za>4){ const wall=C('#9f4934'), cr=C('#efc9a4'), H=10.6, mx=(xa+xb)/2, wd=xb-xa, mz=(za+zb)/2;
+        box(dg,mx,mz,wd,zb-za,0,H,0,wall); box(dg,mx,mz,wd+0.3,zb-za+0.3,H,0.35,0,C('#aaa69e'));
+        for(let k=0;k<=Math.round(wd/4.3);k++){ const x=xa+wd*k/Math.round(wd/4.3); box(dg,x,zb+0.2,0.55,0.5,0,H+0.2,0,cr); }
+        for(const y of [3.3,6.6]) box(dg,mx,zb+0.2,wd,0.45,y-0.15,0.35,0,cr);
+        for(const y of [3.3,6.6]) for(let k=0;k<Math.round(wd/4.3);k++){ const x0=xa+wd*k/Math.round(wd/4.3)+0.7, x1=xa+wd*(k+1)/Math.round(wd/4.3)-0.7; quad(paneL,[x0,zb+0.08],[x1,zb+0.08],y+0.9,y+2.5,GLs); }
+        for(const s of [-1,1]) box(dg,mx+s*(wd/2-3),zb+0.12,3.2,0.2,0.5,H-1,0,C('#d98f6c'));
+        quad(paneL,[mx-3.6,zb+0.1],[mx+3.6,zb+0.1],0.2,3.6,GLb); box(dg,mx,zb+0.12,7.6,0.2,3.6,0.4,0,C('#b4553a'));
+        for(const s of [-5.3,5.3]) box(dg,mx+s,zb+2.7,1.4,1.4,0,8.4,0,cr);
+        box(dg,mx,zb+2.7,12.6,5.8,8.2,1.0,0,cr); for(const s of [-4.5,-2.25,0,2.25,4.5]) box(dg,mx+s,zb+2.7,0.35,5.8,9.2,0.8,0,cr); box(dg,mx,zb+2.4,10,4.8,3.9,0.3,0,cr);
+        plane(mx,8.7,zb+5.62,0,10.4,0.95,hallSign(roman),0.5);
+        for(const s of [-1,1]){ box(dg,mx+s*7.5,zb+7,6,2,0,0.45,0,C('#8a5a3a')); box(dg,mx+s*7.5,zb+7,5.6,1.6,0.45,0.25,0,C('#4f8a3c')); for(let k=0;k<6;k++) pot(mx+s*(4.2+k*0.65),zb+5.6); }
+        markOcc(mx,zb+3,7); } };
+    hallEntrance(/^Hall 13 Canteen$/,/^Hall 13 Block A$/,'XIII'); hallEntrance(/^Hall ?12 Canteen$/,/^Hall 12 Block A$/,'XII');
+    // ---- old shopping complex: shop name boards over the shutters, SBI's blue fascia
+    { const names=[['SUPARSH PROVISION STORE','#fbe7a1','#b3261e'],['RETAIL HOUSE','#2b2b2b','#ffffff'],['BOOK STALL','#ffe14d','#1d3d8f'],['Union Bank','#e8f1fb','#c8102e'],['AMUL','#ffffff','#1d4fa0'],['BAKERY','#3b2a20','#f6d7a7'],['LADINA','#1c1c1c','#f2d27a'],['CASIO','#1f2a44','#ffffff'],['XEROX & PRINTS','#ffffff','#127a3f'],['STATIONERY','#c8102e','#ffffff']];
+      let k=0; for(const re of [/^Old Shopping Complex$/]){ const b=BN(re); if(!b) continue;
+        for(const ob of bInfo.filter(q=>q===b||(Math.hypot(q.cx-b.cx,q.cz-b.cz)<40&&q.H<9&&q.area>300&&!q.name))) for(const e of edges(ob.outer)){ if(e.L<6) continue; const n=Math.floor(e.L/6);
+          for(let i=0;i<n;i++){ const [nm,bg,fg]=names[k++%names.length]; signOn(e,(i+0.5)*e.L/n,3.25,e.L/n-0.6,0.62,txt([nm],bg,fg,'bold 52px sans-serif',512,80),0.56,0.5); } } }
+      const sb=BN(/^SBI$/); if(sb){ const e=frontEdge(sb.outer,6); if(e) signOn(e,e.L/2,sb.H-1.2,Math.min(6,e.L-1),1.0,txt(['SBI'],'#1f5aa8','#ffffff','bold 80px sans-serif',256,64),0.3,0.7); } }
+
+    // ---- P K Kelkar Library: the M-shaped concrete crown on the roof
+    for(const o of decos){ if(o.cust!=='library') continue; const e=edges(o.rings[0]).sort((p,q)=>q.L-p.L)[0], cc=C('#e6e1d7'); if(!e) continue;
+      const [x,z]=e.at(e.L/2,-4); box(dg,x,z,7,3,15.6,1.4,e.ang,cc); for(const s of [-2.3,2.3]){ const c=Math.cos(e.ang),sn=Math.sin(e.ang); box(dg,x+c*s,z+sn*s,1.6,3,17,2.2,e.ang,cc); } }
+
+    // ---- OAT / SAC compound boundary: brick pillars with alternating solid sandstone panels and white grilles
+    { const inBox=p=>p[0]>-575&&p[0]<-392&&p[1]>893&&p[1]<976, brick=C('#9c4a36'), sand=C('#d9c6a0'), white=C('#ecebe6');
+      for(const l of DL){ if(l.t!=='wall') continue; const pts=toPts(l.p); if(!pts.every(inBox)) continue;
+        const dense=[]; for(let i=0;i<pts.length-1;i++){ const a=pts[i],b=pts[i+1],L=Math.hypot(b[0]-a[0],b[1]-a[1]); for(let t=0;t<L;t+=0.5) dense.push([a[0]+(b[0]-a[0])*t/L,a[1]+(b[1]-a[1])*t/L]); }
+        dense.push(pts[pts.length-1]); let k=0, last=dense[0], acc=0;
+        const panel=(a,b,kind)=>{ const dx=b[0]-a[0],dz=b[1]-a[1],L=Math.hypot(dx,dz); if(L<0.3) return; const ang=Math.atan2(dz,dx), mx=(a[0]+b[0])/2, mz=(a[1]+b[1])/2;
+          if(kind){ box(dg,mx,mz,L,0.3,0,2.0,ang,sand); box(dg,mx,mz,L,0.36,2.0,0.12,ang,C('#c9b48d')); }
+          else { box(dg,mx,mz,L,0.3,0,0.5,ang,brick); for(const y of [0.55,1.9]) box(dg,mx,mz,L,0.06,y,0.06,ang,white); const nb=Math.max(2,Math.round(L/0.22)); for(let j=1;j<nb;j++){ const t=j/nb-0.5; box(dg,mx+Math.cos(ang)*L*t,mz+Math.sin(ang)*L*t,0.04,0.04,0.5,1.45,ang,white); } } };
+        box(dg,last[0],last[1],0.5,0.5,0,2.3,0,brick);
+        for(let i=1;i<dense.length;i++){ acc+=Math.hypot(dense[i][0]-dense[i-1][0],dense[i][1]-dense[i-1][1]); if(acc<3&&i<dense.length-1) continue;
+          panel(last,dense[i],k%2===0); box(dg,dense[i][0],dense[i][1],0.5,0.5,0,2.3,Math.atan2(dense[i][1]-last[1],dense[i][0]-last[0]),brick); last=dense[i]; acc=0; k++; } } }
+
+    // ---- Lecture Hall Complex sign: the red-brick wall of the stair up to L5 / L6, on L6's west side, facing the cul-de-sac and the Tutorial Block
+    { const br=C('#a24c39'), cr=C('#b9b4aa'), wx=-214.0, wz=219.9, rail=C('#5d5a56');
+      box(dg,wx,wz,0.8,5.4,0,8.2,0,br); box(dg,wx,wz,1.0,5.6,8.2,0.3,0,cr);
+      plane(wx-0.45,6.2,wz,-Math.PI/2,4.8,2.3,txt(['व्याख्यान कक्ष','LECTURE HALL','COMPLEX'],null,'#18213a',['bold 56px sans-serif','bold 62px sans-serif','bold 62px sans-serif'],512,256),0);
+      plane(wx-0.45,3.0,wz+1.3,-Math.PI/2,1.2,1.0,txt(['L5 · L6'],'#24507e','#ffffff','bold 64px sans-serif',256,180),0);
+      const n=Math.round(4.2/0.19), sx=-214.2; for(let i=0;i<n;i++) box(dg,sx,wz-2.9-(i+0.5)*0.3,1.4,0.3,0,(i+1)*4.2/n,0,cr);   // solid flight rising north from the wall
+      for(let i=0;i<=n;i+=3) box(dg,sx-0.68,wz-2.9-i*0.3,0.05,0.05,i*4.2/n,1.0,0,rail);
+      box(dg,sx,wz-2.9-n*0.3-0.9,1.8,1.8,3.95,0.25,0,cr); box(dg,sx-0.6,wz-2.9-n*0.3-0.9,0.35,0.35,0,3.95,0,cr);
+      markOcc(wx-1,wz,4); markOcc(sx,wz-6,3); } 
+
+    // ---- main gate: brick-red guard hut with a tiled hip roof, on the left as you drive in, a little past the cabin, right at the road edge
+    { const x=990, z=317.4, w=7, d=4.4, H=2.8, brick=C('#9f4a37'), tile=C('#b4553b');
+      box(dg,x,z,w,d,0,H,0,brick); box(dg,x,z,w+0.3,d+0.3,0,0.3,0,C('#cfc7b8'));
+      for(const t of [-2.2,0.4]) box(dg,x+t,z-d/2-0.03,1.4,0.06,1.0,1.1,0,C('#2b3640')); box(dg,x+2.3,z-d/2-0.03,1.0,0.06,0,2.1,0,C('#5e4130'));
+      const T2=(...a)=>{ const c=a.pop(); dg.tri(...a,c); dg.tri(a[0],a[1],a[2],a[6],a[7],a[8],a[3],a[4],a[5],c); };
+      const yE=H+0.05, ov=0.6, rh=1.5, X0=x-w/2-ov, X1=x+w/2+ov, Z0=z-d/2-ov, Z1=z+d/2+ov, rx=(w-d)/2;
+      T2(X0,yE,Z0, x+rx,yE+rh,z, X1,yE,Z0, tile); T2(X0,yE,Z0, x-rx,yE+rh,z, x+rx,yE+rh,z, tile);
+      T2(X1,yE,Z1, x-rx,yE+rh,z, X0,yE,Z1, tile); T2(X1,yE,Z1, x+rx,yE+rh,z, x-rx,yE+rh,z, tile);
+      T2(X0,yE,Z1, x-rx,yE+rh,z, X0,yE,Z0, C('#a24a33')); T2(X1,yE,Z0, x+rx,yE+rh,z, X1,yE,Z1, C('#a24a33'));
+      markOcc(x,z,5); }
+
+    // ---- Cafe Coffee Day: red-brick café under a deep concrete roof slab on round pillars, glass front, palms in brick planters, lit sign
+    for(const o of decos){ if(o.cust!=='ccd') continue; const es=edges(o.outer); let e=null; for(const q of es) if(q.L>6&&(!e||q.nx<e.nx)) e=q; if(!e) continue;    // the front faces west, to the path
+      const D=es.filter(q=>Math.abs(q.ux*e.ux+q.uz*e.uz)<0.3).reduce((m,q)=>Math.max(m,q.L),0)||15, L=e.L, brick=C('#a44d38'), slab=C('#a9a49a'), gl=C('#3d4a50');
+      bx(e,L/2,-(4+D)/2,L-1.6,D-4.6,0,3.5,brick);                                                   // brick hall set back behind the porch
+      quad(paneL,e.at(1.6,-4.27),e.at(L-1.6,-4.27),0.3,3.0,C('#f3dcae')); for(let t=2.2;t<L-1.5;t+=2.4) bx(e,t,-3.9,0.14,0.12,0.3,2.8,gl);
+      bx(e,L/2,-(D-1.4)/2,L+0.6,D+1.4,3.5,0.55,slab); bx(e,L/2,1.3,L+0.6,0.3,3.5,0.9,C('#6f7174'));  // roof slab and front fascia
+      signOn(e,L/2,3.95,Math.min(9,L-1),0.75,txt(['Café Coffee Day'],null,'#ffffff','bold 72px sans-serif',1024,110),1.47,0.9);
+      signOn(e,L*0.86,2.9,1.3,1.3,txt(['café','coffee','day'],'#d71f2e','#ffffff','bold 46px sans-serif',160,160),1.47,0.6);
+      for(const t of [L*0.14,L*0.4,L*0.62,L*0.88]){ const [x,z]=e.at(t,0.9); addMesh(new THREE.CylinderGeometry(0.32,0.32,3.5,10),stdMat(0xb3aea4),x,1.75,z); }
+      for(const [t0,t1] of [[0.6,L*0.36],[L*0.46,L*0.58],[L*0.68,L-0.6]]){ bx(e,(t0+t1)/2,-0.4,t1-t0,1.0,0,0.6,brick); bx(e,(t0+t1)/2,-0.4,t1-t0-0.2,0.8,0.6,0.05,C('#4f8a3c')); }
+      for(const t of [L*0.25,L*0.52,L*0.78]){ const [x,z]=e.at(t,-0.4); box(dg,x,z,0.25,0.25,0.6,3.6,0,C('#7a5a3c')); for(let k=0;k<6;k++){ const a=k/6*Math.PI*2+0.3; box(dg,x+Math.cos(a)*0.9,z+Math.sin(a)*0.9,1.9,0.45,4.15-(k%2)*0.15,0.12,a,C(k%2?'#4f9a3c':'#3f8a3a')); } box(dg,x,z,0.6,0.6,4.1,0.35,0,C('#4f9a3c')); }
+      for(let i=0;i<4;i++){ const [x,z]=e.at(L*0.2+i*L*0.2,4.2); box(dg,x,z,1.0,1.0,0,0.75,0,C('#5a4030')); for(const [dx,dz] of [[0.8,0],[-0.8,0]]) box(dg,x+dx,z+dz,0.45,0.45,0,0.45,0,C('#e8e2d6')); }
+      { const [x,z]=e.at(-1.8,3); box(dg,x,z,3.2,3.2,2.4,0.15,e.ang,C('#8a5a3a')); for(const [a,b] of [[-1.5,-1.5],[1.5,-1.5],[1.5,1.5],[-1.5,1.5]]) box(dg,x+a,z+b,0.1,0.1,0,2.4,0,C('#5a4030')); }
+      const l=labels.find(q=>q.name==='Cafe Coffee Day'); if(l){ l.y=7; l.alt=['CCD','Cafe Coffee Day',...(l.alt||[])]; } markOcc(o.cx,o.cz,10); }
+
+    // ---- LHC Mandir: bigger, pink walls, red spire with white bands, red-and-white porch
+    { const x=-179, z=270, wh=C('#f4f1ea'), pink=C('#ee9bb0'), red=C('#c8322b');
+      box(dg,x,z,8,7,0,0.6,0,wh); for(let k=0;k<3;k++) box(dg,x,z+3.5+0.35+k*0.35,3,0.35,0,0.6-k*0.2,0,wh);
+      box(dg,x,z-1.2,4,4,0.6,3.4,0,pink); box(dg,x,z-1.2,4.3,4.3,4.0,0.3,0,wh);
+      const sp=addMesh(new THREE.ConeGeometry(2.6,5.2,4),stdMat(0xc8322b),x,4.3+2.6,z-1.2); sp.rotation.y=Math.PI/4;
+      for(const [y,r] of [[5.4,2.15],[6.7,1.5]]){ const ring=addMesh(new THREE.CylinderGeometry(r,r,0.16,4),stdMat(0xf4f1ea),x,y,z-1.2); ring.rotation.y=Math.PI/4; }
+      addMesh(new THREE.SphereGeometry(0.32,8,6),stdMat(0xe8b923),x,9.6,z-1.2); box(dg,x,z-1.2,0.05,0.05,9.6,1.6,0,C('#5a4030')); box(dg,x+0.4,z-1.2,0.7,0.05,10.7,0.45,0,C('#e8562a'));
+      for(const [ox,oz] of [[-1.8,1.4],[1.8,1.4],[-1.8,3.2],[1.8,3.2]]) box(dg,x+ox,z+oz,0.35,0.35,0.6,2.8,0,wh);
+      box(dg,x,z+2.3,4.4,2.6,3.4,0.35,0,pink); box(dg,x,z+2.3,4.6,2.8,3.75,0.2,0,red); box(dg,x,z+0.85,1.4,0.06,0.6,2.2,0,C('#8a2a20'));
+      markOcc(x,z,5); }
+
+    // ---- ATM kiosk by the road near the Old Sports Complex (SBI and Union Bank ATMs, OSM points), facing the road to the west
+    { const x=-380.5, z=568.7, wh=C('#ebe8e1'); box(dg,x,z,3.6,7.2,0,3.0,0,wh); box(dg,x,z,4.0,7.6,3.0,0.25,0,C('#9a9a96'));
+      box(dg,x-1.82,z-1.8,0.06,3.2,0.6,0.5,0,C('#1f5aa8')); box(dg,x-1.82,z+1.8,0.06,3.2,0.6,0.5,0,C('#e2231a'));
+      for(const s of [-1.8,1.8]) box(dg,x-1.82,z+s,0.06,1.4,0.05,2.3,0,C('#9fc3d1'));
+      plane(x-1.86,2.75,z,-Math.PI/2,6.6,0.62,txt(['ATM'],'#1f5aa8','#ffffff','bold 72px sans-serif',512,80),0.9);
+      for(const s of [-1,1]) box(dg,x-2.6,z+s*3.0,0.5,0.5,0,0.6,0,C('#d0c9bb')); markOcc(x,z,5); }
+
+    // ---- CMHW: its name on the building
+    { const b=BN(/^CMHW$/); if(b){ const e=edges(b.outer).filter(q=>q.L>4&&q.nx>-0.5).sort((p,q)=>q.L-p.L)[0]; if(e){ signOn(e,e.L/2,Math.max(2.6,b.H-1.0),Math.min(e.L-0.6,6),1.0,txt(['CMHW','Center for Mental Health and Wellbeing'],'#2f6f62','#ffffff',['bold 54px sans-serif','bold 26px sans-serif'],512,128),0.16,0.5); } } }
+    // ---- Divyam Naturals: small shop on the lawn by Shopping Centre Road (no photo yet, so a plain shop with a green awning)
+    { const x=159.5, z=154.5; box(dg,x,z,6.4,5.0,0,3.1,0,C('#e9e2d2')); box(dg,x,z,6.8,5.4,3.1,0.25,0,C('#c9c0ae'));
+      box(dg,x,z+2.52,3.2,0.06,0.1,2.3,0,C('#3b4a52')); box(dg,x-2.2,z+2.52,1.2,0.06,0.9,1.2,0,C('#9fc3d1'));
+      box(dg,x,z+3.2,6.6,1.6,2.45,0.12,0,C('#3f8a3a')); plane(x,2.85,z+2.58,0,5.4,0.48,txt(['Divyam Naturals'],'#2f6f3a','#ffffff','bold 56px sans-serif',512,64),0.5);
+      markOcc(x,z+2,5); }
+    // ---- India Post office and India Post Payments Bank (from the photo): white-painted brick block, maroon IPPB board on a rusty steel frame,
+    //      black foundation plaque, red post box in front
+    { const x=180.5, z=151, w=13, d=8.5, wh=C('#ecebe6');
+      box(dg,x,z,w,d,0,3.6,0,wh); box(dg,x,z,w+0.4,d+0.4,3.6,0.35,0,C('#d6d3cb')); box(dg,x,z,w+0.2,d+0.2,0,0.4,0,C('#c9c5bb'));
+      for(const t of [-4.2,-1.4,3.6]) box(dg,x+t,z+d/2+0.04,1.6,0.06,1.0,1.3,0,C('#55626d'));
+      box(dg,x+1.2,z+d/2+0.04,1.5,0.06,0,2.4,0,C('#8b9096')); box(dg,x+1.2,z+d/2+0.8,3.2,1.6,0,0.15,0,C('#b9b4aa'));
+      box(dg,x-5.6,z+d/2+0.05,1.0,0.05,0.9,1.2,0,C('#1d1d1f'));                                             // foundation plaque
+      const fx=x-1.5, fz=z+d/2+2.2, rust=C('#7a4a2c'); for(const s of [-3,3]) box(dg,fx+s,fz,0.14,0.14,0,3.4,0,rust); box(dg,fx,fz,6.4,0.14,2.25,0.12,0,rust);
+      box(dg,fx,fz,6.4,0.12,2.3,1.25,0,C('#6e1f2e'));
+      plane(fx,2.92,fz+0.08,0,6.2,1.15,tex((g,W,H)=>{ g.fillStyle='#6e1f2e'; g.fillRect(0,0,W,H); g.fillStyle='#e23b3b'; g.beginPath(); g.arc(W*0.47,H*0.42,H*0.27,0,7); g.fill();
+          g.strokeStyle='#e8c35a'; g.lineWidth=5; for(let k=0;k<3;k++){ g.beginPath(); g.moveTo(W*0.33,H*(0.6-k*0.04)); g.quadraticCurveTo(W*0.47,H*(0.75-k*0.04),W*0.6,H*(0.1+k*0.03)); g.stroke(); }
+          g.fillStyle='#f5ece6'; g.textBaseline='middle'; g.textAlign='left'; g.font='bold 34px sans-serif'; g.fillText('India Post',18,H*0.3); g.fillText('Payments Bank',18,H*0.58);
+          g.textAlign='right'; g.font='bold 34px sans-serif'; g.fillText('इंडिया पोस्ट',W-18,H*0.3); g.fillText('पेमेन्ट्स बैंक',W-18,H*0.58);
+          g.fillStyle='#e8414b'; g.fillRect(14,H*0.76,W-28,3); g.fillStyle='#f5ece6'; g.font='bold 26px sans-serif'; g.fillText('आई.आई.टी.',W-18,H*0.88); },640,128),0.6);
+      const pb=addMesh(new THREE.CylinderGeometry(0.32,0.32,1.3,12),stdMat(0xc8202a),x+6.2,0.65,fz+0.8); addMesh(new THREE.SphereGeometry(0.34,12,6,0,Math.PI*2,0,Math.PI/2),stdMat(0xc8202a),x+6.2,1.3,fz+0.8);
+      markOcc(x,z+2,9);
+      labels.push({name:'India Post Office',x,z,y:6,rank:3,tier:3,cat:'civic',alt:['Post office','IIT Post Office','India Post Payments Bank','IPPB','Dak ghar'],size:10}); }
+    // ---- build the glass
+    if(paneL.p.length){ const m=new THREE.MeshLambertMaterial({vertexColors:true,emissive:0xffc985,emissiveIntensity:0,side:THREE.DoubleSide}); const mesh=new THREE.Mesh(paneL.build(),m); mesh.receiveShadow=true; scene.add(mesh);
+      nightHooks.push(n=>{ m.emissiveIntensity=n*0.55; }); }
+    if(paneD.p.length){ const mesh=new THREE.Mesh(paneD.build(),new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide})); mesh.receiveShadow=true; scene.add(mesh); }
+    // ---- build the signs: pack every sign canvas into one atlas texture, then one mesh for lit signs and one for painted ones
+    signs.push(...(window.__mtSigns||[]));
+    if(signs.length){ const AW=2048; let sx=0,sy=0,rowH=0;
+      const uniq=[...new Set(signs.map(s=>s.cv))].map(cv=>{ const wide=cv.width>=1000; const k=Math.min(1,(wide?1024:320)/cv.width,(wide?110:84)/cv.height); return {cv,w:Math.max(8,Math.round(cv.width*k)),h:Math.max(8,Math.round(cv.height*k))}; }).sort((a,b)=>b.h-a.h);
+      for(const u of uniq){ if(sx+u.w+2>AW){ sx=0; sy+=rowH+2; rowH=0; } u.x=sx; u.y=sy; sx+=u.w+2; rowH=Math.max(rowH,u.h); }
+      const AH=Math.pow(2,Math.ceil(Math.log2(sy+rowH+2))); const ac=document.createElement('canvas'); ac.width=AW; ac.height=AH; const g=ac.getContext('2d'); const pos=new Map();
+      for(const u of uniq){ g.drawImage(u.cv,u.x,u.y,u.w,u.h); pos.set(u.cv,u); }
+      const at=new THREE.CanvasTexture(ac); at.colorSpace=THREE.SRGBColorSpace; at.anisotropy=4;
+      const mk=(list,glow)=>{ if(!list.length) return; const Pp=[],N=[],U=[],I=[];
+        list.forEach((s,i)=>{ const u=pos.get(s.cv), c=Math.cos(s.ry), sn=Math.sin(s.ry), hw=s.w/2, hh=s.h/2;
+          for(const [lx,ly] of [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]]){ Pp.push(s.x+lx*c,s.y+ly,s.z-lx*sn); N.push(sn,0,c); }
+          const u0=(u.x+0.5)/AW,u1=(u.x+u.w-0.5)/AW,v0=1-(u.y+u.h-0.5)/AH,v1=1-(u.y+0.5)/AH; U.push(u0,v0,u1,v0,u1,v1,u0,v1); const b=i*4; I.push(b,b+1,b+2,b,b+2,b+3); });
+        const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.Float32BufferAttribute(Pp,3)); geo.setAttribute('normal',new THREE.Float32BufferAttribute(N,3)); geo.setAttribute('uv',new THREE.Float32BufferAttribute(U,2)); geo.setIndex(I); geo.computeBoundingSphere();
+        const m=new THREE.MeshLambertMaterial({map:at,alphaTest:0.5,...(glow?{emissive:0xffffff,emissiveMap:at,emissiveIntensity:0}:{})}); const mesh=new THREE.Mesh(geo,m); mesh.receiveShadow=true; scene.add(mesh);
+        if(glow) nightHooks.push(n=>{ m.emissiveIntensity=n*0.55; }); };
+      mk(signs.filter(s=>s.glow),1); mk(signs.filter(s=>!s.glow),0); }
+  }
 }
 // ---- power towers along the lines + wires
 {
@@ -1509,13 +1985,13 @@ function lampOk(x,z,minD){ const cx=Math.floor(x/minD), cz=Math.floor(z/minD);
   for(let i=-1;i<=1;i++) for(let j=-1;j<=1;j++){ const L=lampGrid.get((cx+i)+','+(cz+j)); if(L) for(const q of L) if(Math.hypot(q[0]-x,q[1]-z)<minD) return false; }
   return true; }
 function addLamp(l,minD){ if(!lampOk(l[0],l[1],minD)) return; lamps.push(l); const k=Math.floor(l[0]/minD)+','+Math.floor(l[1]/minD); (lampGrid.get(k)||lampGrid.set(k,[]).get(k)).push(l); }
-for(const p of (data.lamps||[])) addLamp([p[0],p[1],0,0],20);           // real lamp positions from OSM
+// evenly spaced street lamps: one every 42 m along every road, alternating sides, never closer than 30 m to another lamp
+//  (the OSM lamp points are bunched on a few roads, so they are not used for placement)
 const MAIN=new Set(['trunk','trunk_link','primary','primary_link','secondary','secondary_link','tertiary','tertiary_link','unclassified']);
 for(const v of vehicular.slice().sort((a,b)=>b.w-a.w)){ if(v.t==='runway'||v.t==='taxiway') continue;
-  const main=MAIN.has(v.t), spacing=main?40:v.t==='residential'?62:95;
-  let side=1;
-  walk(v.pts,spacing,rr(5,spacing*0.8),(x,z,dx,dz)=>{ const off=v.w/2+0.9; const px=x-dz*off*side, pz=z+dx*off*side; side=-side;
-    addLamp([px,pz,-dz*side,dx*side], main?32:46); });
+  rr(0,1); let side=1;                                   // (keeps the random sequence for the trees etc. unchanged)
+  walk(v.pts,48,20,(x,z,dx,dz)=>{ const off=v.w/2+0.9; const px=x-dz*off*side, pz=z+dx*off*side; side=-side;
+    addLamp([px,pz,-dz*side,dx*side],34); });
 }
 let lampGlow, lampHeads, lampPools, poolMat, headMat;
 {
@@ -1687,7 +2163,7 @@ function applyLights(n){
   const k=Math.max(0,(n-0.35)/0.65); nightN=n; nightK=k;
   wallMat.emissive.copy(winWarm).multiplyScalar(k*1.35);
   headMat.color.copy(C('#9aa0a6')).lerp(C('#fff1c9').multiplyScalar(3.2),k);
-  poolMat.opacity=k*0.62; lampGlow.material.opacity=k*0.85;
+  poolMat.opacity=k*0.6; lampGlow.material.opacity=k*0.85;
   bloom.strength=liteLvl?0:k*0.85; nightHooks.forEach(f=>f(n,k)); aoMat.opacity=0.62-0.2*n;
 }
 let sunAlt=0;
@@ -2620,11 +3096,24 @@ addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(), 
 // ---- about
 function showAbout(){ setURL(null);
   const pm=peopleMeta;
-  cardShell('IIT Kanpur in 3D','About this map',`<p class="c-note">A 3D map of the IIT Kanpur campus you can explore, search and find your way around: real sun and seasons, walk mode, directions, useful spots and professors' offices.</p>
+  cardShell('IIT Kanpur in 3D','About this map',`<p class="c-note">A hand-built 3D model of the IIT Kanpur campus that you can explore, search and find your way around. Halls, lecture halls, the OAT, the main gate, cafés, shops and other landmarks are modelled from real photos and campus videos, with matching colours, signboards, entrances and even the street lamps at night.</p>
+  <div class="c-sec">What you can do</div>
+  <ul class="c-note" style="margin:4px 0 0;padding-left:18px;line-height:1.55">
+    <li><b>Search anything</b>: halls and their blocks, departments, lecture halls, canteens, cafés, shops, roads and landmarks, by their real names or the short ones people use (CC, L20, CCD, MT, H12, ESB2…).</li>
+    <li><b>Find a professor's office</b>: type a professor's name to see their department, building and room on the map.</li>
+    <li><b>Directions from anywhere to anywhere</b>: pick a From and a To (or use your location) to get the walking route with distance and time.</li>
+    <li><b>Walk the route</b>: Start follows you live with GPS, turn by turn; Preview plays the walk so you can see it first.</li>
+    <li><b>Useful spots</b>: cycle repair, drinking water, toilets, ATMs and banks, photocopy, laundry, pharmacy, salons, post office, cycle parking, EV charging and lecture halls, each highlighted on the map with a list of the nearest ones.</li>
+    <li><b>Walk mode</b>: drop down to street level and stroll around campus.</li>
+    <li><b>Day and night</b>: the sun, shadows and seasons follow the real time in Kanpur; at night windows and street lamps light up.</li>
+    <li><b>2D map and angle lock</b>: switch to a flat map, or lock the tilt to zoom in easily; double-tap to zoom.</li>
+    <li><b>Filters and sharing</b>: show only academic, hostels, food, shops, sports, health or worship, and share a link to any place or route.</li>
+    <li><b>Works on any phone</b>: a lighter mode switches on by itself on slower phones.</li>
+  </ul>
   <div class="c-sec">Tips</div><p class="c-note">Tap any building or label for details. <b>/</b> or <b>Ctrl K</b> jumps to search, <b>Tab</b> on a result starts directions there, <b>Esc</b> closes panels. Try searching <b>water</b>, <b>atm</b>, <b>photocopy</b> or a professor's name.</p>
-  <div class="c-sec">Sources</div><p class="c-note">Buildings, roads, paths, opening hours and other details: ${link('https://www.openstreetmap.org/copyright','© OpenStreetMap contributors')} (ODbL). Directions are worked out over the OpenStreetMap road and footpath network.</p>
+  <div class="c-sec">Sources</div><p class="c-note">Building outlines, roads and footpaths start from ${link('https://www.openstreetmap.org/copyright','© OpenStreetMap contributors')} (ODbL), then corrected and detailed by hand. Directions use the campus road and footpath network.</p>
   <p class="c-note" style="margin-top:8px">Professors: IIT Kanpur's public ${link('https://www.iitk.ac.in/iitk-faculty','faculty directory')}${pm?` (${pm.items.length} people, as listed on ${esc(pm.fetched)})`:''}. Offices are placed from the room listed there; where none is given, the department's building is used.</p>
-  <div class="c-sec">Something wrong?</div><p class="c-note">Most details here come from OpenStreetMap, so fixing them on ${link('https://www.openstreetmap.org/#map=15/26.5123/80.2329','openstreetmap.org')} improves this map on the next update.</p>`); }
+  <div class="c-sec">Something off?</div><p class="c-note">Spotted a building in the wrong place, a missing shop or a wrong colour? Let Nisarg know and it'll be fixed in the next update.</p>`); }
 const aboutLink=document.getElementById('aboutLink'); aboutLink.onclick=showAbout; aboutLink.onkeydown=e=>{ if(e.key==='Enter') showAbout(); };
 
 let dirty=true, idleT=performance.now(), atmosDirty=true, shadowDirty=true, camDist=1000;
@@ -2647,7 +3136,7 @@ function updateSun(){
   const cam=sun.shadow.camera; cam.left=-s;cam.right=s;cam.top=s;cam.bottom=-s; cam.near=100; cam.far=4800; cam.updateProjectionMatrix();
   const fk=wxCur.fogK;
   scene.fog.near=(d*0.8+150)*fk; scene.fog.far=(d*2.2+1250)*(0.35+0.65*fk)*(fk<0.5?0.55+fk:1);
-  lampGlow.material.size = THREE.MathUtils.clamp(d/110,4,11);
+  lampGlow.material.size = THREE.MathUtils.clamp(d/115,4,10.5);
 }
 let last=performance.now(), lastRender=0, liveT=0;
 const FRAME_MS=isCoarse?32:0;

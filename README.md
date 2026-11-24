@@ -48,7 +48,7 @@ then open http://localhost:8000. Opening `index.html` directly from disk won't w
 
 ## Credits and sources
 
-- Made by **Nisarg**.
+- Made by **Nisarg Parashar, Student at IITK**.
 - Building outlines, roads and footpaths start from © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open Database License (ODbL), then corrected and detailed by hand.
 - Professors' offices come from IIT Kanpur's public [faculty directory](https://www.iitk.ac.in/iitk-faculty).
 - 3D rendering with [three.js](https://threejs.org).

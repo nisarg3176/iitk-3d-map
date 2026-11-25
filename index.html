@@ -313,7 +313,7 @@
 
 <div id="title" class="ui">
   <h1>IIT Kanpur <span>in 3D</span></h1>
-  <p>Made by Nisarg · <a id="aboutLink" role="button" tabindex="0">About</a></p>
+  <p>Made by Nisarg and Parul · <a id="aboutLink" role="button" tabindex="0">About</a></p>
 </div>
 
 <div id="searchWrap" class="ui">
@@ -3152,7 +3152,7 @@ function showAbout(){ setURL(null);
   <div class="c-sec">Tips</div><p class="c-note">Tap any building or label for details. <b>/</b> or <b>Ctrl K</b> jumps to search, <b>Tab</b> on a result starts directions there, <b>Esc</b> closes panels. Try searching <b>water</b>, <b>atm</b>, <b>photocopy</b> or a professor's name.</p>
   <div class="c-sec">Sources</div><p class="c-note">Building outlines, roads and footpaths start from ${link('https://www.openstreetmap.org/copyright','© OpenStreetMap contributors')} (ODbL), then corrected and detailed by hand. Directions use the campus road and footpath network.</p>
   <p class="c-note" style="margin-top:8px">Professors: IIT Kanpur's public ${link('https://www.iitk.ac.in/iitk-faculty','faculty directory')}${pm?` (${pm.items.length} people, as listed on ${esc(pm.fetched)})`:''}. Offices are placed from the room listed there; where none is given, the department's building is used.</p>
-  <div class="c-sec">Something off?</div><p class="c-note">Spotted a building in the wrong place, a missing shop or a wrong colour? Let Nisarg know and it'll be fixed in the next update.</p>`); }
+  <div class="c-sec">Something off?</div><p class="c-note">Spotted a building in the wrong place, a missing shop or a wrong colour? Let us know and it'll be fixed in the next update.</p>`); }
 const aboutLink=document.getElementById('aboutLink'); aboutLink.onclick=showAbout; aboutLink.onkeydown=e=>{ if(e.key==='Enter') showAbout(); };
 
 let dirty=true, idleT=performance.now(), atmosDirty=true, shadowDirty=true, camDist=1000;

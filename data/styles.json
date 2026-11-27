@@ -1,0 +1,92 @@
+{
+  "_about": "Building looks. 'styles' = colours (wall, frame, stripe, band, awning, doors, bay spacing in metres, plain = no window grid). 'byName' / 'byPattern' give a building its style by name; 'custom' / 'customPattern' mark buildings that have their own hand-made model in js/landmarks; 'alt' = other names people search for; 'hallStyles' = whole-hall looks.",
+  "styles": {
+    "h13": {"wall":"#9f4934","frame":"#e8b394","bay":4.3,"pergola":1},
+    "vh": {"wall":"#d6c6a6","frame":"#c4b190","bay":4.6},
+    "hallB": {"wall":"#ddd0b5","frame":"#e9dec8","bay":6},
+    "lhcr": {"wall":"#a4503b","frame":"#cbc5b8","bay":5},
+    "cc": {"wall":"#a9533e","frame":"#dcd7cd","bay":6},
+    "esb": {"wall":"#a3a5a4","frame":"#c6c8c7","bay":5},
+    "sac": {"wall":"#d6b68a","frame":"#c49d6c","bay":6},
+    "sacst": {"wall":"#d6c3a0","plain":1},
+    "oldshop": {"wall":"#e4ddcf"},
+    "hall1": {"wall":"#a34d39","frame":"#eeebe4","bay":3.6},
+    "hall3": {"wall":"#8ea1b5","frame":"#e8dbb0","bay":4.2},
+    "hall1m": {"wall":"#a34d39","frame":"#eeebe4","bay":4},
+    "hall10": {"wall":"#ddd0b5","frame":"#e9dec8","bay":4.6},
+    "tb": {"wall":"#a4503b","frame":"#cbc5b8","bay":5},
+    "djac": {"wall":"#a94c3a"},
+    "djac2": {"wall":"#a6a6a2","plain":1},
+    "ncl": {"wall":"#b4553f"},
+    "rm": {"wall":"#ad573f","plain":1},
+    "cse": {"wall":"#a9523d","frame":"#d6cfc2","bay":4.4},
+    "nsc": {"wall":"#ecebe6","frame":"#bcb9b1","bay":6},
+    "sbi": {"wall":"#a9433a","band":"#1f5aa8"},
+    "shop": {"wall":"#ead6b0","awn":"#d0553c"},
+    "assoc": {"wall":"#e6d9c2","frame":"#b4583c","bay":5},
+    "fire": {"wall":"#efebe3","band":"#c8372d","doors":"#b42f27"},
+    "audi": {"wall":"#a8553f","frame":"#ddcdb0","bay":6.5},
+    "hc": {"wall":"#a54c38","frame":"#ece2cf","bay":4.2},
+    "cmhw": {"wall":"#eceadf","frame":"#d8d4c6"},
+    "l20": {"wall":"#b25a40","frame":"#e2cda6","bay":5.5},
+    "l20n": {"wall":"#8f8c86","plain":1},
+    "newshop": {"wall":"#a24e3c","frame":"#eaa98a","bay":5},
+    "subway": {"wall":"#3d7a39","frame":"#f1c40f"},
+    "sbux": {"wall":"#3a3d40","frame":"#8b5a3a"},
+    "chem": {"wall":"#8f968f","frame":"#e3ddcc","bay":4},
+    "nescafe": {"wall":"#8a5a3a","frame":"#2b2b2b","awn":"#2f2f2f"}
+  },
+  "byName": {
+    "Main Auditorium": "audi",
+    "HC": "hc",
+    "CMHW": "cmhw",
+    "New Lecture Hall Complex": "l20n",
+    "New Shopping Center": "newshop",
+    "subway": "subway",
+    "Starbucks": "sbux",
+    "Tutorial Block": "tb",
+    "DJAC": "djac2",
+    "Rajeev Motwani Building": "rm",
+    "H.R. Kadim Diwan Building": "cse",
+    "Indoor Sports Complex": "sac",
+    "Faculty Building": "l20",
+    "Computer Centre": "cc",
+    "NCL": "ncl",
+    "ESB3": "esb",
+    "Engineering Science Building 2": "esb",
+    "Dept Of BSBE, IITK": "hallB",
+    "ACMS": "hallB",
+    "ACES": "hallB",
+    "Western Labs": "hallB",
+    "Western Lab Extension": "hallB",
+    "SBI": "sbi"
+  },
+  "byPattern": [
+    ["^Department of Chemical Engineering","chem"],
+    ["^L[1-7]$","lhcr"]
+  ],
+  "custom": {
+    "P K Kelkar Library": "library",
+    "Cafe Coffee Day": "ccd",
+    "Wind Tunnel Facility": "wt",
+    "Computer Center Canteen": "cck"
+  },
+  "customPattern": [
+    ["^L1[0-5]$","lhc"]
+  ],
+  "alt": {
+    "Computer Centre": ["CC"],
+    "New Lecture Hall Complex": ["L20","New LHC"],
+    "H.R. Kadim Diwan Building": ["CSE Department","Computer Science Department"],
+    "Indoor Sports Complex": ["New Sports Complex","NSC","New SAC"],
+    "Engineering Science Building 2": ["ESB2","ESB 2","ESB-2"],
+    "Wind Tunnel Facility": ["National Wind Tunnel Facility","NWTF"],
+    "Computer Center Canteen": ["CC Canteen"]
+  },
+  "hallStyles": {
+    "Hall 1": "hall1",
+    "Hall 3": "hall3",
+    "Hall 10": "hall10",
+    "Hall 11": "hall10"
+  }
+}

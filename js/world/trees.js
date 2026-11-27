@@ -36,6 +36,7 @@ for(const v of vehicular){
 // shuffle-trim to budget (keep avenue trees first)
 for(const t of (data.trees||[])) if(!occAt(t[0],t[1])) trees.unshift([t[0],t[1],0,rr(1.1,1.35)]);
 if(trees.length>MAXT){ const keep=trees.splice(0,0); for(let i=trees.length-1;i>0;i--){ const j=(R()*(i+1))|0; [trees[i],trees[j]]=[trees[j],trees[i]]; } trees.length=MAXT; }
+keepTreesClear(trees,bushes);   // move trees and bushes off buildings and paving (js/world/clearance.js)
 
 {
   const geoms=[

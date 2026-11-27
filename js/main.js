@@ -8,10 +8,12 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
+const fail=e=>{ console.error(e); const m=document.getElementById('lmsg'); if(m) m.textContent='Something went wrong while loading. Please refresh.'; };
 const get=(url,json)=>fetch(url,{credentials:'same-origin'}).then(r=>{ if(!r.ok) throw new Error(url+' '+r.status); return json?r.json():r.text(); });
 const files=[...document.querySelectorAll('link[data-part]')].map(l=>l.getAttribute('href'));
-const [CAMPUS,STYLES,...codes]=await Promise.all([get('campus.json?v=20261129',1),get('data/styles.json?v=20261127b',1),...files.map(f=>get(f))]);
+let CAMPUS,STYLES,codes;
+try{ [CAMPUS,STYLES,...codes]=await Promise.all([get('campus.json?v=20261129',1),get('data/styles.json?v=20261127b',1),...files.map(f=>get(f))]); }catch(e){ fail(e); throw e; }
 const src=files.map((f,i)=>'// ===== '+f.replace(/\?.*/,'')+' =====\n'+codes[i]).join('\n');
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
 const app=new AsyncFunction('THREE','MapControls','EffectComposer','RenderPass','UnrealBloomPass','OutputPass','CAMPUS','STYLES',"'use strict';\n"+src+'\n//# sourceURL=iitk3d-app.js');
-app(THREE,MapControls,EffectComposer,RenderPass,UnrealBloomPass,OutputPass,CAMPUS,STYLES).catch(e=>{ console.error(e); const m=document.getElementById('lmsg'); if(m) m.textContent='Something went wrong while loading. Please refresh.'; });
+app(THREE,MapControls,EffectComposer,RenderPass,UnrealBloomPass,OutputPass,CAMPUS,STYLES).catch(fail);

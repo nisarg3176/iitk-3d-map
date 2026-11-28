@@ -43,6 +43,9 @@ function frame(now){
     const f=new THREE.Vector3(); camera.getWorldDirection(f); ru.uO.value.copy(camera.position).addScaledVector(f,near?20:110); }
   stepLife(dt,t);
   if(marker.visible){ const s=marker.userData.s, k=((now-marker.userData.t0)/1400)%1; marker.children[0].scale.setScalar(s*(1+k*.35)); marker.children[1].scale.setScalar(s*.9); mkMat.opacity=.9*(1-k*.6); }
+  // near clip plane follows the zoom: the further out the camera, the further the near plane. This gives the depth buffer
+  // far more precision, which stops thin overlapping surfaces (paving, windows, panels) from flickering when seen from far.
+  if(!wk.on){ const nn=Math.min(60,Math.max(3,camera.position.distanceTo(controls.target)*0.03)); if(Math.abs(nn-camera.near)>0.25){ camera.near=nn; camera.updateProjectionMatrix(); } }
   sky.position.copy(camera.position); refreshEnv(now);
   if(bloom.strength>0.01) composer.render(); else renderer.render(scene,camera);
   updateLabels(); stepNav(now); stepPins();

@@ -28,8 +28,9 @@ function placeLabel(l,W,H,placed){
   const x=(tmpV.x*.5+.5)*W, y=(-tmpV.y*.5+.5)*H;
   if(!l.w) l.w=l.el.offsetWidth||l.name.length*7+24;
   const pd=placeLabel.pad||4, r=[x-l.w/2-pd,y-l.dy-pd,x+l.w/2+pd,y-l.dy+28+pd];
-  if(placed.some(p=>!(r[2]<p[0]||r[0]>p[2]||r[3]<p[1]||r[1]>p[3]))) return false;
-  placed.push(r); l.el.style.transform=`translate(${Math.max(6,Math.min(W-l.w-6,x-l.w/2))|0}px,${(y-l.dy)|0}px)`; return true;
+  // a label that is hidden needs 8 px more room to appear, so labels near each other don't keep swapping as the map moves
+  const ex=l.on?0:8; if(placed.some(p=>!(r[2]+ex<p[0]||r[0]-ex>p[2]||r[3]+ex<p[1]||r[1]-ex>p[3]))) return false;
+  placed.push(r); l.el.style.transform=`translate3d(${Math.max(6,Math.min(W-l.w-6,x-l.w/2)).toFixed(2)}px,${(y-l.dy).toFixed(2)}px,0)`; return true;   // sub-pixel, so labels glide with the map instead of jumping a pixel at a time
 }
 function setVis(l,vis){ if(vis!==l.on){ l.el.classList.toggle('show',vis); l.on=vis; if(!vis) setTimeout(()=>{ if(!l.on) l.el.style.transform='translate(-9999px,0)'; },260); } }
 function updateLabels(){

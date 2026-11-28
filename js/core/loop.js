@@ -2,16 +2,17 @@
 // ---- automatic lite mode: if frames come too slowly, drop the costly effects
 var liteLvl=0; const perf={n:0,slow:0,t0:performance.now()+4000};
 function setLite(lv,quiet){ if(lv<=liteLvl) return; liteLvl=lv;
-  const pr=lv>=2?Math.min(DPR,0.8):Math.min(DPR,1); renderer.setPixelRatio(pr); composer.setPixelRatio(pr);
+  const pr=lv>=2?Math.min(DPR,1.25):Math.min(DPR,1.5); renderer.setPixelRatio(pr); composer.setPixelRatio(pr);   // keep it sharp on phone screens (they are 2–3x)
   renderer.setSize(innerWidth,innerHeight); composer.setSize(innerWidth,innerHeight);
-  if(sun.castShadow){ sun.castShadow=false; scene.traverse(o=>{ if(o.material){ (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true); } }); }
+  if(lv>=2&&sun.castShadow){ sun.castShadow=false;   // shadows go only at the second step: without them the map looks flat and glary
+    scene.traverse(o=>{ if(o.material){ (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true); } }); }
   bloom.strength=0; atmosDirty=true; dirty=true; perf.n=perf.slow=0;
-  try{ localStorage.setItem('iitk3d.lite',String(lv)); }catch(e){}
+  try{ sessionStorage.setItem('iitk3d.lite',String(lv)); }catch(e){}   // only for this visit: the next visit measures again
   if(!quiet) showHint('Switched to lite mode for smoother movement',3500); }
 function watchPerf(now,gap){ if(liteLvl>=2||now<perf.t0||document.hidden||gap>10000) return;
-  if(!perf.n) perf.w0=now; perf.n++; if(gap>45) perf.slow++;
+  if(!perf.n) perf.w0=now; perf.n++; if(gap>55) perf.slow++;
   if(perf.n>=90||(now-perf.w0>6000&&perf.n>=8)){ if(perf.slow/perf.n>0.6) setLite(liteLvl+1); perf.n=perf.slow=0; } }
-try{ const sv=+localStorage.getItem('iitk3d.lite')||0; const q=new URLSearchParams(location.search).get('lite'); const lv=q!=null?(+q||0):sv; if(q==='0'){ localStorage.removeItem('iitk3d.lite'); perf.t0=1e12; } if(lv) setLite(Math.min(2,lv),true); }catch(e){}
+try{ localStorage.removeItem('iitk3d.lite'); const sv=+sessionStorage.getItem('iitk3d.lite')||0; const q=new URLSearchParams(location.search).get('lite'); const lv=q!=null?(+q||0):sv; if(q==='0'){ sessionStorage.removeItem('iitk3d.lite'); perf.t0=1e12; } if(lv) setLite(Math.min(2,lv),true); }catch(e){}
 function frame(now){
   requestAnimationFrame(frame);
   if(now-lastRender<FRAME_MS && !dirty) return;
